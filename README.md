@@ -89,7 +89,7 @@ traceability-system/
 
 ### 1. 克隆项目
 ```bash
-git clone <repository-url>
+git clone https://github.com/bucky1119/traceability-system.git
 cd traceability-system
 ```
 
@@ -121,6 +121,30 @@ npm run start:dev
 cd ../web-admin
 npm start
 ```
+## 日常开发工作流程
+### 获取最新代码
+```bash
+#每天开始工作前，先拉取最新代码
+git pull origin main
+#创建并切换到新功能分支
+git checkout -b feature/user-authentication
+#开发完成后提交
+git add .
+git commit -m "feat: 添加用户认证功能"
+ 推送到远程分支
+git push origin feature/user-authentication
+```
+### 代码合并流程
+```bash
+#切换到主分支
+git checkout main
+#合并功能分支
+git merge feature/user-authentication
+#推送到远程
+git push origin main
+#删除本地功能分支
+git branch -d feature/user-authentication
+```
 
 ## API文档
 
@@ -131,7 +155,36 @@ npm start
 - 代码规范遵循ESLint + Prettier
 - 提交信息使用Conventional Commits规范
 - 分支管理使用Git Flow工作流
+## 实际工作流程示例
+~~~bash
+# 1. 获取最新代码
+git checkout main
+git pull origin main
+# 2. 创建功能分支
+git checkout -b feature/qr-code-generation
+# 3. 开发代码...
+# 4. 提交代码
+git add .
+git commit -m "feat: 实现二维码生成功能"
+# 5. 推送到远程
+git push origin feature/qr-code-generation
+# 6. 在 GitHub 上创建 Pull Request
+# 7. 等待审查和合并
+~~~
+## 修复 Bug
+~~~bash
+# 1. 创建修复分支
+git checkout -b hotfix/qr-code-bug
 
+# 2. 修复代码...
+# 3. 提交修复
+git commit -m "fix: 修复二维码显示问题"
+
+# 4. 推送到远程
+git push origin hotfix/qr-code-bug
+
+# 5. 快速合并到主分支
+~~~
 ## 部署说明
 
 详细的部署说明请参考各子项目的README文档。
