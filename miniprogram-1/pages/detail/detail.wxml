@@ -1,0 +1,220 @@
+<view class="container">
+  <!-- 调试信息 -->
+  <view class="debug-info" style="background: #f0f0f0; padding: 10rpx; margin: 10rpx; font-size: 24rpx; color: #666;">
+    <text>调试信息: 产品ID={{productId}}, 产品数据: {{product ? '已加载' : '未加载'}}</text>
+  </view>
+
+  <!-- 产品基本信息 -->
+  <view class="product-header">
+    <view class="product-image">
+      <image 
+        src="{{product.imageUrl || '/images/default-product.jpg'}}" 
+        mode="aspectFill"
+      />
+      <view class="product-status {{product.isQualified ? 'qualified' : 'unqualified'}}">
+        {{product.isQualified ? '合格' : '不合格'}}
+      </view>
+    </view>
+    
+    <view class="product-info">
+      <text class="product-name">{{product.name}}</text>
+      <text class="product-batch">批次编号: {{product.batch.batchCode}}</text>
+      <text class="product-origin" wx:if="{{product.origin}}">产地: {{product.origin}}</text>
+      <text class="product-producer">生产者: {{product.producerName}}</text>
+    </view>
+  </view>
+
+  <!-- 详细信息 -->
+  <view class="detail-sections">
+    <!-- 种植信息 -->
+    <view class="detail-section">
+      <view class="section-title">
+        <text class="title-icon">🌱</text>
+        <text class="title-text">种植信息</text>
+      </view>
+      
+      <view class="info-grid">
+        <view class="info-item" wx:if="{{product.plantingDate}}">
+          <text class="info-label">种植日期</text>
+          <text class="info-value">{{product.plantingDate}}</text>
+        </view>
+        
+        <view class="info-item" wx:if="{{product.harvestDate}}">
+          <text class="info-label">收获日期</text>
+          <text class="info-value">{{product.harvestDate}}</text>
+        </view>
+        
+        <view class="info-item" wx:if="{{product.origin}}">
+          <text class="info-label">产地</text>
+          <text class="info-value">{{product.origin}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 检测信息 -->
+    <view class="detail-section">
+      <view class="section-title">
+        <text class="title-icon">🔬</text>
+        <text class="title-text">检测信息</text>
+      </view>
+      
+      <view class="info-grid">
+        <view class="info-item" wx:if="{{product.testType}}">
+          <text class="info-label">检测类型</text>
+          <text class="info-value">{{product.testType}}</text>
+        </view>
+        
+        <view class="info-item" wx:if="{{product.testDate}}">
+          <text class="info-label">检测日期</text>
+          <text class="info-value">{{product.testDate}}</text>
+        </view>
+        
+        <view class="info-item">
+          <text class="info-label">检测结果</text>
+          <text class="info-value {{product.isQualified ? 'qualified' : 'unqualified'}}">
+            {{product.isQualified ? '合格' : '不合格'}}
+          </text>
+        </view>
+        
+        <view class="info-item" wx:if="{{product.testReport}}">
+          <text class="info-label">检测报告</text>
+          <text class="info-link" bindtap="openTestReport">查看报告</text>
+        </view>
+        
+        <view class="info-item" wx:if="{{product.safetyRiskTest}}">
+          <text class="info-label">安全风险因子检测</text>
+          <text class="info-value">{{product.safetyRiskTest}}</text>
+        </view>
+        
+        <view class="info-item" wx:if="{{product.ingredientTest}}">
+          <text class="info-label">产品成分检测</text>
+          <text class="info-value">{{product.ingredientTest}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 生产者信息 -->
+    <view class="detail-section">
+      <view class="section-title">
+        <text class="title-icon">👨‍🌾</text>
+        <text class="title-text">生产者信息</text>
+      </view>
+      
+      <view class="producer-card">
+        <view class="producer-avatar">
+          <image src="/images/avatar.png" mode="aspectFill"/>
+        </view>
+        
+        <view class="producer-info">
+          <text class="producer-name">{{product.producerName}}</text>
+          <text class="producer-phone" wx:if="{{product.producerTel}}">{{product.producerTel}}</text>
+          <text class="producer-enterprise" wx:if="{{product.producerEnterprise}}">{{product.producerEnterprise}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 批次信息 -->
+    <view class="detail-section">
+      <view class="section-title">
+        <text class="title-icon">📦</text>
+        <text class="title-text">批次信息</text>
+      </view>
+      
+      <view class="info-grid">
+        <view class="info-item">
+          <text class="info-label">批次编号</text>
+          <text class="info-value">{{product.batch.batchCode}}</text>
+        </view>
+        
+        <view class="info-item" wx:if="{{product.batch.createTime}}">
+          <text class="info-label">创建时间</text>
+          <text class="info-value">{{product.batch.createTime}}</text>
+        </view>
+        
+        <view class="info-item" wx:if="{{product.batch.notes}}">
+          <text class="info-label">批次备注</text>
+          <text class="info-value">{{product.batch.notes}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 二维码信息 -->
+    <view class="detail-section" wx:if="{{qrcodes.length > 0}}">
+      <view class="section-title">
+        <text class="title-icon">📱</text>
+        <text class="title-text">二维码信息</text>
+      </view>
+      
+      <view class="qrcode-list">
+        <view 
+          class="qrcode-item" 
+          wx:for="{{qrcodes}}" 
+          wx:key="id"
+        >
+          <view class="qrcode-content" bindtap="previewQrcode" data-qrcode="{{item}}">
+            <image 
+              class="qrcode-thumbnail" 
+              src="{{item.qrcodeImageUrl}}" 
+              mode="aspectFit"
+            />
+            <view class="qrcode-info">
+              <text class="qrcode-id">ID: {{item.qrcodeId}}</text>
+              <text class="qrcode-scans">扫码次数: {{item.scanCount}}</text>
+              <text class="qrcode-time">生成时间: {{item.generateTime}}</text>
+            </view>
+          </view>
+          
+          <view class="qrcode-actions">
+            <button 
+              class="qrcode-action-btn save-btn" 
+              bindtap="saveQrcodeToAlbum"
+              data-qrcode="{{item}}"
+            >
+              保存
+            </button>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-buttons">
+    <button class="btn-secondary" bindtap="handleEdit">编辑产品</button>
+    <button class="btn-primary" bindtap="handleGenerateQrcode">生成二维码</button>
+    <button class="btn-danger" bindtap="handleDelete">删除产品</button>
+  </view>
+
+  <!-- 二维码弹窗 -->
+  <view class="modal-overlay" wx:if="{{showQrcodeModal}}" bindtap="closeQrcodeModal">
+    <view class="modal-content" catchtap="true">
+      <view class="modal-header">
+        <text class="modal-title">生成的二维码</text>
+        <text class="modal-close" bindtap="closeQrcodeModal">×</text>
+      </view>
+      
+      <view class="qrcode-container">
+        <image 
+          class="qrcode-image" 
+          src="{{currentQrcode.imageUrl}}" 
+          mode="aspectFit"
+          bindtap="previewQrcode"
+        />
+        <text class="qrcode-tip">点击图片可放大查看</text>
+      </view>
+      
+      <view class="qrcode-info">
+        <text class="info-item">产品: {{currentQrcode.productName}}</text>
+        <text class="info-item">批次: {{currentQrcode.batchCode}}</text>
+        <text class="info-item">二维码ID: {{currentQrcode.qrcodeId}}</text>
+        <text class="info-item">生成时间: {{currentQrcode.generateTime}}</text>
+      </view>
+      
+      <view class="modal-actions">
+        <button class="btn-primary" bindtap="saveToAlbum">
+          保存到本地
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

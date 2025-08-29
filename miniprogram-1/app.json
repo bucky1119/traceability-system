@@ -1,0 +1,54 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/detail/detail",
+    "pages/input/input",
+    "pages/myVegetables/myVegetables",
+    "pages/userCenter/userCenter",
+    "pages/admin/farmerInput/farmerInput",
+    "pages/admin/productExport/productExport",
+    "pages/admin/farmerManagement/farmerManagement",
+    "pages/admin/systemStats/systemStats"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTitleText": "蔬菜溯源系统",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#667eea",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "images/home.png",
+        "selectedIconPath": "images/home-active.png"
+      },
+      {
+        "pagePath": "pages/input/input",
+        "text": "录入",
+        "iconPath": "images/add.png",
+        "selectedIconPath": "images/add-active.png"
+      },
+      {
+        "pagePath": "pages/myVegetables/myVegetables",
+        "text": "我的",
+        "iconPath": "images/my.png",
+        "selectedIconPath": "images/my-active.png"
+      },
+      {
+        "pagePath": "pages/userCenter/userCenter",
+        "text": "用户",
+        "iconPath": "images/user.png",
+        "selectedIconPath": "images/user-active.png"
+      }
+    ]
+  },
+  "renderer": "webview",
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

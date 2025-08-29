@@ -1,0 +1,199 @@
+<!--index.wxml-->
+<view class="container">
+  <!-- 模拟数据测试状态 -->
+  <view class="mock-status" wx:if="{{mockDataStatus}}">
+    <text class="mock-text">{{mockDataStatus}}</text>
+  </view>
+
+  <!-- 顶部搜索栏 -->
+  <view class="search-header">
+    <view class="search-bar">
+      <input 
+        class="search-input" 
+        placeholder="搜索产品名称或批次编号" 
+        value="{{searchKeyword}}"
+        bindinput="onSearchInput"
+      />
+      <button class="search-btn" bindtap="handleSearch">搜索</button>
+    </view>
+    
+    <view class="scan-section">
+      <button class="scan-btn" bindtap="handleScan">
+        <text class="scan-icon">📱</text>
+        <text class="scan-text">扫码溯源</text>
+      </button>
+    </view>
+  </view>
+
+  <!-- 筛选栏 -->
+  <view class="filter-bar">
+    <picker 
+      mode="selector" 
+      range="{{filterOptions}}" 
+      range-key="label"
+      value="{{filterIndex}}"
+      bindchange="onFilterChange"
+    >
+      <view class="filter-item">
+        <text class="filter-label">{{filterOptions[filterIndex].label}}</text>
+        <text class="filter-arrow">▼</text>
+      </view>
+    </picker>
+    
+    <view class="sort-options">
+      <text 
+        class="sort-item {{sortBy === 'time' ? 'active' : ''}}" 
+        bindtap="handleSort"
+        data-sort="time"
+      >
+        时间
+      </text>
+      <text 
+        class="sort-item {{sortBy === 'name' ? 'active' : ''}}" 
+        bindtap="handleSort"
+        data-sort="name"
+      >
+        名称
+      </text>
+    </view>
+  </view>
+
+  <!-- 产品列表 -->
+  <view class="product-list" wx:if="{{filteredProducts.length > 0}}">
+    <view 
+      class="product-card" 
+      wx:for="{{filteredProducts}}" 
+      wx:key="id"
+      bindtap="goToDetail"
+      data-id="{{item.id}}"
+    >
+      <view class="product-image">
+        <image 
+          src="{{item.imageUrl || '/images/default-product.jpg'}}" 
+          mode="aspectFill"
+        />
+        <view class="product-status {{item.isQualified ? 'qualified' : 'unqualified'}}">
+          {{item.isQualified ? '合格' : '不合格'}}
+        </view>
+      </view>
+      
+      <view class="product-content">
+        <text class="product-name">{{item.name}}</text>
+        <text class="product-batch">批次: {{item.batch.batchCode}}</text>
+        <text class="product-origin" wx:if="{{item.origin}}">产地: {{item.origin}}</text>
+        <text class="product-producer">生产者: {{item.producerName}}</text>
+        <text class="product-date">录入时间: {{item.created_at}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{filteredProducts.length === 0 && !loading}}">
+    <image src="/images/empty.png" mode="aspectFit" class="empty-image"/>
+    <text class="empty-text">暂无产品数据</text>
+    <text class="empty-subtext">请先录入产品信息</text>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading-state" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 溯源信息弹窗 -->
+  <view class="modal-overlay" wx:if="{{showTraceModal}}" bindtap="closeTraceModal">
+    <view class="modal-content" catchtap="true">
+      <view class="modal-header">
+        <text class="modal-title">产品溯源信息</text>
+        <text class="modal-close" bindtap="closeTraceModal">×</text>
+      </view>
+      
+      <view class="trace-content" wx:if="{{traceInfo}}">
+        <view class="trace-section">
+          <text class="section-title">产品信息</text>
+          <view class="trace-info">
+            <text class="info-item">产品名称: {{traceInfo.product.name}}</text>
+            <text class="info-item">批次编号: {{traceInfo.batch.batchCode}}</text>
+            <text class="info-item" wx:if="{{traceInfo.product.origin}}">产地: {{traceInfo.product.origin}}</text>
+            <text class="info-item">检测结果: {{traceInfo.product.isQualified ? '合格' : '不合格'}}</text>
+          </view>
+        </view>
+        
+        <view class="trace-section">
+          <text class="section-title">生产者信息</text>
+          <view class="trace-info">
+            <text class="info-item">生产者: {{traceInfo.product.producer.username}}</text>
+            <text class="info-item" wx:if="{{traceInfo.product.producer.tel}}">联系电话: {{traceInfo.product.producer.tel}}</text>
+            <text class="info-item" wx:if="{{traceInfo.product.producer.enterprise}}">所属企业: {{traceInfo.product.producer.enterprise}}</text>
+          </view>
+        </view>
+        
+        <view class="trace-section">
+          <text class="section-title">种植信息</text>
+          <view class="trace-info">
+            <text class="info-item" wx:if="{{traceInfo.product.plantingDate}}">种植日期: {{traceInfo.product.plantingDate}}</text>
+            <text class="info-item" wx:if="{{traceInfo.product.harvestDate}}">收获日期: {{traceInfo.product.harvestDate}}</text>
+          </view>
+        </view>
+        
+        <view class="trace-section">
+          <text class="section-title">检测信息</text>
+          <view class="trace-info">
+            <text class="info-item" wx:if="{{traceInfo.product.testType}}">检测类型: {{traceInfo.product.testType}}</text>
+            <text class="info-item" wx:if="{{traceInfo.product.testDate}}">检测日期: {{traceInfo.product.testDate}}</text>
+          </view>
+        </view>
+        
+        <view class="trace-section">
+          <text class="section-title">二维码信息</text>
+          <view class="trace-info">
+            <text class="info-item">二维码ID: {{traceInfo.qrcode.qrcodeId}}</text>
+            <text class="info-item">生成时间: {{traceInfo.qrcode.generateTime}}</text>
+            <text class="info-item">扫码次数: {{traceInfo.qrcode.scanCount}}</text>
+          </view>
+        </view>
+      </view>
+      
+      <view class="modal-actions">
+        <button class="btn-secondary" bindtap="closeTraceModal">关闭</button>
+        <button class="btn-primary" bindtap="goToDetail" wx:if="{{traceInfo}}">
+          查看详情
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 扫码结果弹窗 -->
+  <view class="modal-overlay" wx:if="{{showScanResultModal}}" bindtap="closeScanResultModal">
+    <view class="modal-content" catchtap="true">
+      <view class="modal-header">
+        <text class="modal-title">扫码结果</text>
+        <text class="modal-close" bindtap="closeScanResultModal">×</text>
+      </view>
+      
+      <view class="scan-result" wx:if="{{scanResult}}">
+        <view class="result-success" wx:if="{{scanResult.success}}">
+          <text class="result-icon">✅</text>
+          <text class="result-title">溯源信息获取成功</text>
+          <view class="result-info">
+            <text class="info-item">产品: {{scanResult.data.product.name}}</text>
+            <text class="info-item">批次: {{scanResult.data.batch.batchCode}}</text>
+            <text class="info-item">生产者: {{scanResult.data.product.producer.username}}</text>
+          </view>
+        </view>
+        
+        <view class="result-error" wx:else>
+          <text class="result-icon">❌</text>
+          <text class="result-title">溯源信息获取失败</text>
+          <text class="result-message">{{scanResult.message}}</text>
+        </view>
+      </view>
+      
+      <view class="modal-actions">
+        <button class="btn-secondary" bindtap="closeScanResultModal">关闭</button>
+        <button class="btn-primary" bindtap="viewTraceInfo" wx:if="{{scanResult && scanResult.success}}">
+          查看详情
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

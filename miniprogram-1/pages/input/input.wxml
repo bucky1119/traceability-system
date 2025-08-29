@@ -1,0 +1,205 @@
+<view class="container">
+  <view class="header">
+    <text class="title">{{isEditMode ? '编辑产品信息' : '录入产品信息'}}</text>
+    <text class="subtitle">{{isEditMode ? '请修改蔬菜的基本信息和检测数据' : '请填写蔬菜的基本信息和检测数据，提交后可在"我的产品"页面生成二维码'}}</text>
+  </view>
+
+  <form bindsubmit="handleSubmit">
+    <view class="form-section">
+      <view class="section-title">基本信息</view>
+      
+      <view class="form-item">
+        <text class="label required">产品名称</text>
+        <input 
+          class="input" 
+          placeholder="请输入蔬菜名称" 
+          value="{{form.name}}"
+          bindinput="onInput"
+          data-field="name"
+        />
+      </view>
+      
+      <view class="form-item">
+        <text class="label required">批次编号</text>
+        <input 
+          class="input" 
+          placeholder="请输入批次编号" 
+          value="{{form.batchCode}}"
+          bindinput="onInput"
+          data-field="batchCode"
+        />
+      </view>
+      
+      <view class="form-item">
+        <text class="label">产地</text>
+        <input 
+          class="input" 
+          placeholder="请输入产地信息" 
+          value="{{form.origin}}"
+          bindinput="onInput"
+          data-field="origin"
+        />
+      </view>
+      
+      <view class="form-item">
+        <text class="label required">种植日期</text>
+        <picker 
+          mode="date" 
+          value="{{form.plantingDate}}"
+          bindchange="onDateChange"
+          data-field="plantingDate"
+        >
+          <view class="picker">
+            <text class="picker-text">{{form.plantingDate || '请选择种植日期'}}</text>
+            <text class="picker-arrow">></text>
+          </view>
+        </picker>
+      </view>
+      
+      <view class="form-item">
+        <text class="label required">收获日期</text>
+        <picker 
+          mode="date" 
+          value="{{form.harvestDate}}"
+          bindchange="onDateChange"
+          data-field="harvestDate"
+        >
+          <view class="picker">
+            <text class="picker-text">{{form.harvestDate || '请选择收获日期'}}</text>
+            <text class="picker-arrow">></text>
+          </view>
+        </picker>
+      </view>
+    </view>
+
+    <view class="form-section">
+      <view class="section-title">检测信息</view>
+      
+      <view class="form-item">
+        <text class="label">检测类型</text>
+        <input 
+          class="input" 
+          placeholder="如：农药残留检测" 
+          value="{{form.testType}}"
+          bindinput="onInput"
+          data-field="testType"
+        />
+      </view>
+      
+      <view class="form-item">
+        <text class="label">检测日期</text>
+        <picker 
+          mode="date" 
+          value="{{form.testDate}}"
+          bindchange="onDateChange"
+          data-field="testDate"
+        >
+          <view class="picker">
+            <text class="picker-text">{{form.testDate || '请选择检测日期'}}</text>
+            <text class="picker-arrow">></text>
+          </view>
+        </picker>
+      </view>
+      
+      <view class="form-item">
+        <text class="label">安全风险因子检测</text>
+        <textarea 
+          class="textarea" 
+          placeholder="如：重金属含量：铅<0.1mg/kg，镉<0.05mg/kg" 
+          value="{{form.safetyRiskTest}}"
+          bindinput="onInput"
+          data-field="safetyRiskTest"
+          maxlength="500"
+        />
+        <text class="char-count">{{form.safetyRiskTest.length}}/500</text>
+      </view>
+      
+      <view class="form-item">
+        <text class="label">产品成分检测</text>
+        <textarea 
+          class="textarea" 
+          placeholder="如：蛋白质：2.1g/100g，维生素C：15mg/100g" 
+          value="{{form.ingredientTest}}"
+          bindinput="onInput"
+          data-field="ingredientTest"
+          maxlength="500"
+        />
+        <text class="char-count">{{form.ingredientTest.length}}/500</text>
+      </view>
+
+      <!-- <view class="form-item">
+        <text class="label">检测报告</text>
+        <button type="default" bindtap="chooseReport">上传文件</button>
+        <text>{{form.testReport ? '已上传: ' + form.testReport : '未上传'}}</text>
+      </view> -->
+      
+      <view class="form-item">
+        <text class="label">是否合格</text>
+        <switch 
+          checked="{{form.isQualified}}"
+          bindchange="onSwitchChange"
+          data-field="isQualified"
+          color="#4caf50"
+        />
+      </view>
+    </view>
+
+    <view class="form-section">
+      <view class="section-title">其他信息</view>
+      
+      <view class="form-item">
+        <text class="label">产品图片</text>
+        <view class="image-upload">
+          <view class="upload-area" bindtap="chooseImage" wx:if="{{!form.imageUrl}}">
+            <text class="upload-icon">+</text>
+            <text class="upload-text">点击上传图片</text>
+          </view>
+          <view class="image-preview" wx:if="{{form.imageUrl}}">
+            <image 
+              class="preview-image" 
+              src="{{form.imageUrl}}" 
+              mode="aspectFill"
+              bindtap="previewImage"
+            />
+            <view class="image-actions">
+              <button class="btn-small" bindtap="chooseImage">重新上传</button>
+              <button class="btn-small btn-danger" bindtap="removeImage">删除</button>
+            </view>
+          </view>
+        </view>
+      </view>
+      
+      <view class="form-item">
+        <text class="label">批次备注</text>
+        <textarea 
+          class="textarea" 
+          placeholder="请输入批次备注信息" 
+          value="{{form.batchNotes}}"
+          bindinput="onInput"
+          data-field="batchNotes"
+          maxlength="200"
+        />
+        <text class="char-count">{{form.batchNotes.length}}/200</text>
+      </view>
+    </view>
+
+    <view class="form-actions">
+      <button 
+        class="btn-secondary" 
+        bindtap="handleReset"
+        disabled="{{submitting}}"
+      >
+        重置
+      </button>
+      <button 
+        class="btn-primary" 
+        form-type="submit"
+        loading="{{submitting}}"
+      >
+        {{isEditMode ? '更新产品' : '提交产品'}}
+      </button>
+    </view>
+  </form>
+
+
+</view>

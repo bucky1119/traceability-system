@@ -1,0 +1,32 @@
+{
+  "name": "vegetable-traceability-miniprogram",
+  "version": "1.0.0",
+  "description": "蔬菜溯源系统微信小程序",
+  "main": "app.js",
+  "scripts": {
+    "dev": "echo '请在微信开发者工具中打开项目'",
+    "build": "echo '小程序无需构建，直接上传即可'",
+    "lint": "echo '请使用微信开发者工具的代码检查功能'"
+  },
+  "keywords": [
+    "微信小程序",
+    "蔬菜溯源",
+    "二维码",
+    "农产品"
+  ],
+  "author": "开发团队",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example/vegetable-traceability-miniprogram.git"
+  },
+  "bugs": {
+    "url": "https://github.com/example/vegetable-traceability-miniprogram/issues"
+  },
+  "homepage": "https://github.com/example/vegetable-traceability-miniprogram#readme"
+} 

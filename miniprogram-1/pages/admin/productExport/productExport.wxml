@@ -1,0 +1,94 @@
+<!--productExport.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="title">产品信息导出</text>
+    <text class="subtitle">导出不同农户的产品信息</text>
+  </view>
+
+  <!-- 导出所有产品 -->
+  <view class="section">
+    <view class="section-title">导出所有产品</view>
+    <view class="export-card">
+      <text class="card-title">全部产品数据</text>
+      <text class="card-desc">导出系统中所有农户的产品信息</text>
+      <button 
+        class="btn-primary" 
+        bindtap="exportAllProducts"
+        loading="{{loading}}"
+      >
+        导出全部产品
+      </button>
+    </view>
+  </view>
+
+  <!-- 按农户导出 -->
+  <view class="section">
+    <view class="section-title">按农户导出</view>
+    
+    <view class="form-item">
+      <text class="label">选择农户</text>
+      <picker 
+        mode="selector" 
+        range="{{farmers}}" 
+        range-key="username"
+        value="{{farmerIndex}}"
+        bindchange="onFarmerChange"
+      >
+        <view class="picker-item">
+          <text class="picker-value">{{selectedFarmer ? selectedFarmer.username : '请选择农户'}}</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+    
+    <view class="farmer-info" wx:if="{{selectedFarmer}}">
+      <text class="info-item">联系电话: {{selectedFarmer.tel}}</text>
+      <text class="info-item">所属企业: {{selectedFarmer.enterprise}}</text>
+      <text class="info-item">产品数量: {{selectedFarmer.productCount}}</text>
+    </view>
+    
+    <view class="form-item">
+      <text class="label">开始日期</text>
+      <picker 
+        mode="date" 
+        value="{{exportParams.startDate}}"
+        bindchange="onStartDateChange"
+      >
+        <view class="picker-item">
+          <text class="picker-value">{{exportParams.startDate || '请选择开始日期'}}</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+    
+    <view class="form-item">
+      <text class="label">结束日期</text>
+      <picker 
+        mode="date" 
+        value="{{exportParams.endDate}}"
+        bindchange="onEndDateChange"
+      >
+        <view class="picker-item">
+          <text class="picker-value">{{exportParams.endDate || '请选择结束日期'}}</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+    
+    <button 
+      class="btn-primary" 
+      bindtap="exportFarmerProducts"
+      loading="{{loading}}"
+      disabled="{{!selectedFarmer}}"
+    >
+      导出农户产品
+    </button>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="actions">
+    <button class="btn-secondary" bindtap="goBack">
+      返回
+    </button>
+  </view>
+</view> 

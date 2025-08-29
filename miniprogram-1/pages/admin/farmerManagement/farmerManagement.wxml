@@ -1,0 +1,78 @@
+<!--farmerManagement.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="title">农户管理</text>
+    <text class="subtitle">管理农户信息和权限</text>
+  </view>
+
+  <!-- 农户列表 -->
+  <view class="section">
+    <view class="section-title">农户列表</view>
+    
+    <view class="farmer-list">
+      <view 
+        class="farmer-item {{selectedFarmer && selectedFarmer.id === farmer.id ? 'selected' : ''}}"
+        wx:for="{{farmers}}"
+        wx:key="id"
+        wx:for-item="farmer"
+        bindtap="selectFarmer"
+        data-farmer="{{farmer}}"
+      >
+        <view class="farmer-info">
+          <text class="farmer-name">{{farmer.username}}</text>
+          <text class="farmer-enterprise">{{farmer.enterprise}}</text>
+          <text class="farmer-stats">产品数量: {{farmer.productCount}}</text>
+        </view>
+        <view class="farmer-actions">
+          <button 
+            class="btn-small" 
+            bindtap="viewFarmerDetail"
+            data-farmer="{{farmer}}"
+            catchtap="viewFarmerDetail"
+          >
+            详情
+          </button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 农户产品列表 -->
+  <view class="section" wx:if="{{selectedFarmer}}">
+    <view class="section-title">{{selectedFarmer.username}} 的产品</view>
+    
+    <view class="product-list">
+      <view 
+        class="product-item"
+        wx:for="{{farmerProducts}}"
+        wx:key="id"
+        wx:for-item="product"
+        bindtap="viewProductDetail"
+        data-product="{{product}}"
+      >
+        <view class="product-info">
+          <text class="product-name">{{product.name}}</text>
+          <text class="product-origin">{{product.origin}}</text>
+          <text class="product-status {{product.isQualified ? 'qualified' : 'unqualified'}}">
+            {{product.isQualified ? '合格' : '不合格'}}
+          </text>
+        </view>
+        <view class="product-dates">
+          <text class="date-item">种植: {{product.plantingDate}}</text>
+          <text class="date-item">收获: {{product.harvestDate}}</text>
+        </view>
+      </view>
+    </view>
+    
+    <view class="empty-state" wx:if="{{farmerProducts.length === 0}}">
+      <text class="empty-text">该农户暂无产品</text>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="actions">
+    <button class="btn-secondary" bindtap="goBack">
+      返回
+    </button>
+  </view>
+</view> 

@@ -1,0 +1,186 @@
+.App {
+  text-align: center;
+  height: 100%;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  padding: 20px;
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 页面通用样式 */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 统计卡片样式 */
+.stats-row {
+  margin-bottom: 24px;
+}
+
+.stats-row .ant-card {
+  text-align: center;
+}
+
+/* 表格卡片样式 */
+.table-card {
+  margin-bottom: 24px;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+/* 仪表盘样式 */
+.dashboard {
+  padding: 0;
+}
+
+.dashboard-header {
+  margin-bottom: 24px;
+}
+
+.dashboard-header h1 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #333;
+}
+
+.dashboard-header p {
+  margin: 0;
+  color: #666;
+  font-size: 16px;
+}
+
+.dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+}
+
+.dashboard-loading p {
+  margin-top: 16px;
+  color: #666;
+}
+
+/* 扫描统计样式 */
+.scan-stats-row {
+  margin-bottom: 24px;
+}
+
+.scan-card .ant-statistic-content {
+  font-size: 32px;
+}
+
+.scan-trend {
+  margin: 8px 0 0 0;
+  color: #52c41a;
+  font-size: 14px;
+}
+
+.quality-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 16px;
+}
+
+.quality-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qualified-icon {
+  color: #52c41a;
+  font-size: 16px;
+}
+
+.unqualified-icon {
+  color: #ff4d4f;
+  font-size: 16px;
+}
+
+/* 图表样式 */
+.charts-row {
+  margin-bottom: 24px;
+}
+
+.chart-card {
+  height: 100%;
+}
+
+/* 最近扫描记录样式 */
+.recent-scans-row {
+  margin-bottom: 24px;
+}
+
+.recent-scans-card .ant-table {
+  margin-top: 16px;
+}
+
+/* 用户管理页面样式 */
+.users-page {
+  padding: 0;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .dashboard-header h1 {
+    font-size: 24px;
+  }
+} 

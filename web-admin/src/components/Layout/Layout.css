@@ -1,0 +1,88 @@
+/* 主布局样式 */
+.logo {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #001529;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.logo h2 {
+  margin: 0;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.header {
+  background: white;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.trigger {
+  font-size: 18px;
+  line-height: 64px;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.trigger:hover {
+  color: #1890ff;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.notification-btn {
+  margin-right: 16px;
+  font-size: 16px;
+}
+
+.user-info {
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.3s;
+}
+
+.user-info:hover {
+  background-color: #f5f5f5;
+}
+
+.username {
+  font-weight: 500;
+  color: #333;
+}
+
+.content {
+  margin: 24px;
+  padding: 24px;
+  background: white;
+  border-radius: 8px;
+  min-height: calc(100vh - 112px);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .header {
+    padding: 0 16px;
+  }
+  
+  .content {
+    margin: 16px;
+    padding: 16px;
+  }
+  
+  .logo h2 {
+    font-size: 14px;
+  }
+} 

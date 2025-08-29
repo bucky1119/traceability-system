@@ -1,0 +1,136 @@
+.users-page {
+  padding: 0;
+}
+
+.users-page .page-header {
+  margin-bottom: 24px;
+}
+
+.users-page .page-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 统计卡片样式 */
+.users-page .stats-row {
+  margin-bottom: 24px;
+}
+
+.users-page .stats-row .ant-card {
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.users-page .stats-row .ant-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 表格卡片样式 */
+.users-page .table-card {
+  margin-bottom: 24px;
+}
+
+.users-page .table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+/* 表格样式 */
+.users-page .ant-table {
+  border-radius: 8px;
+}
+
+.users-page .ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+}
+
+.users-page .ant-table-tbody > tr:hover > td {
+  background: #f5f5f5;
+}
+
+/* 标签样式 */
+.users-page .ant-tag {
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* 按钮样式 */
+.users-page .ant-btn {
+  border-radius: 6px;
+}
+
+.users-page .ant-btn-text {
+  padding: 4px 8px;
+}
+
+.users-page .ant-btn-text:hover {
+  background: #f5f5f5;
+}
+
+/* 模态框样式 */
+.users-page .ant-modal {
+  border-radius: 8px;
+}
+
+.users-page .ant-modal-header {
+  border-radius: 8px 8px 0 0;
+}
+
+.users-page .ant-form-item-label > label {
+  font-weight: 500;
+}
+
+/* 搜索框样式 */
+.users-page .ant-input-affix-wrapper {
+  border-radius: 6px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .users-page .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .users-page .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .users-page .stats-row .ant-col {
+    margin-bottom: 16px;
+  }
+  
+  .users-page .ant-table {
+    font-size: 12px;
+  }
+  
+  .users-page .ant-table-thead > tr > th,
+  .users-page .ant-table-tbody > tr > td {
+    padding: 8px 4px;
+  }
+}
+
+@media (max-width: 576px) {
+  .users-page .ant-table {
+    font-size: 11px;
+  }
+  
+  .users-page .ant-table-thead > tr > th,
+  .users-page .ant-table-tbody > tr > td {
+    padding: 6px 2px;
+  }
+  
+  .users-page .ant-btn-text {
+    padding: 2px 4px;
+    font-size: 12px;
+  }
+} 

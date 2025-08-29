@@ -1,0 +1,189 @@
+.qrcodes-page {
+  padding: 0;
+}
+
+.qrcodes-page .page-header {
+  margin-bottom: 24px;
+}
+
+.qrcodes-page .page-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 统计卡片样式 */
+.qrcodes-page .stats-row {
+  margin-bottom: 24px;
+}
+
+.qrcodes-page .stats-row .ant-card {
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.qrcodes-page .stats-row .ant-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 表格卡片样式 */
+.qrcodes-page .table-card {
+  margin-bottom: 24px;
+}
+
+.qrcodes-page .table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+/* 表格样式 */
+.qrcodes-page .ant-table {
+  border-radius: 8px;
+}
+
+.qrcodes-page .ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+}
+
+.qrcodes-page .ant-table-tbody > tr:hover > td {
+  background: #f5f5f5;
+}
+
+/* 标签样式 */
+.qrcodes-page .ant-tag {
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* 按钮样式 */
+.qrcodes-page .ant-btn {
+  border-radius: 6px;
+}
+
+.qrcodes-page .ant-btn-text {
+  padding: 4px 8px;
+}
+
+.qrcodes-page .ant-btn-text:hover {
+  background: #f5f5f5;
+}
+
+/* 模态框样式 */
+.qrcodes-page .ant-modal {
+  border-radius: 8px;
+}
+
+.qrcodes-page .ant-modal-header {
+  border-radius: 8px 8px 0 0;
+}
+
+.qrcodes-page .ant-form-item-label > label {
+  font-weight: 500;
+}
+
+/* 搜索框样式 */
+.qrcodes-page .ant-input-affix-wrapper {
+  border-radius: 6px;
+}
+
+/* 二维码图片样式 */
+.qrcodes-page .ant-image {
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #f0f0f0;
+}
+
+/* 扫描次数样式 */
+.qrcodes-page .scan-count {
+  font-weight: bold;
+  color: #1890ff;
+}
+
+.qrcodes-page .scan-count-high {
+  color: #52c41a;
+}
+
+.qrcodes-page .scan-count-medium {
+  color: #faad14;
+}
+
+.qrcodes-page .scan-count-low {
+  color: #ff4d4f;
+}
+
+/* 状态样式 */
+.qrcodes-page .status-active {
+  background: #f6ffed;
+  border-color: #b7eb8f;
+  color: #52c41a;
+}
+
+.qrcodes-page .status-inactive {
+  background: #fff2f0;
+  border-color: #ffccc7;
+  color: #ff4d4f;
+}
+
+/* 批量生成按钮样式 */
+.qrcodes-page .batch-generate-btn {
+  margin-right: 8px;
+}
+
+/* 下载按钮样式 */
+.qrcodes-page .download-btn {
+  color: #1890ff;
+}
+
+.qrcodes-page .download-btn:hover {
+  color: #40a9ff;
+  background: #e6f7ff;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .qrcodes-page .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .qrcodes-page .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .qrcodes-page .stats-row .ant-col {
+    margin-bottom: 16px;
+  }
+  
+  .qrcodes-page .ant-table {
+    font-size: 12px;
+  }
+  
+  .qrcodes-page .ant-table-thead > tr > th,
+  .qrcodes-page .ant-table-tbody > tr > td {
+    padding: 8px 4px;
+  }
+}
+
+@media (max-width: 576px) {
+  .qrcodes-page .ant-table {
+    font-size: 11px;
+  }
+  
+  .qrcodes-page .ant-table-thead > tr > th,
+  .qrcodes-page .ant-table-tbody > tr > td {
+    padding: 6px 2px;
+  }
+  
+  .qrcodes-page .ant-btn-text {
+    padding: 2px 4px;
+    font-size: 12px;
+  }
+} 

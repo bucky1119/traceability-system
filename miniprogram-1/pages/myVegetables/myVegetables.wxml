@@ -1,0 +1,165 @@
+<view class="container">
+  <view class="header">
+    <text class="title">我的产品</text>
+    <text class="subtitle">管理您录入的所有蔬菜产品</text>
+  </view>
+
+  <!-- 统计卡片 -->
+  <view class="stats-card">
+    <view class="stats-item">
+      <text class="stats-number">{{stats.totalProducts}}</text>
+      <text class="stats-label">总产品数</text>
+    </view>
+    <view class="stats-item">
+      <text class="stats-number">{{stats.totalQrcodes}}</text>
+      <text class="stats-label">生成二维码</text>
+    </view>
+    <view class="stats-item">
+      <text class="stats-number">{{stats.totalScans}}</text>
+      <text class="stats-label">总扫码次数</text>
+    </view>
+  </view>
+
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-input-container">
+      <input 
+        class="search-input" 
+        placeholder="搜索产品名称或批次编号" 
+        value="{{searchKeyword}}"
+        bindinput="onSearchInput"
+      />
+      <text 
+        class="clear-btn" 
+        wx:if="{{searchKeyword}}" 
+        bindtap="clearSearch"
+      >×</text>
+    </view>
+    <button class="search-btn" bindtap="handleSearch">搜索</button>
+  </view>
+
+  <!-- 筛选栏 -->
+  <view class="filter-bar">
+    <picker 
+      mode="selector" 
+      range="{{filterOptions}}" 
+      range-key="label"
+      value="{{filterIndex}}"
+      bindchange="onFilterChange"
+    >
+      <view class="filter-item">
+        <text class="filter-label">{{filterOptions[filterIndex].label}}</text>
+        <text class="filter-arrow">▼</text>
+      </view>
+    </picker>
+  </view>
+
+  <!-- 搜索结果提示 -->
+  <view class="search-result-tip" wx:if="{{searchKeyword || filterIndex > 0}}">
+    <text class="tip-text">找到 {{filteredProducts.length}} 个产品</text>
+    <text class="reset-btn" bindtap="resetFilters">重置筛选</text>
+  </view>
+
+  <!-- 产品列表 -->
+  <view class="product-list" wx:if="{{filteredProducts.length > 0}}">
+    <view 
+      class="product-item" 
+      wx:for="{{filteredProducts}}" 
+      wx:key="id"
+      bindtap="goToDetail"
+      data-id="{{item.id}}"
+    >
+      <view class="product-image">
+        <image 
+          src="{{item.imageUrl || '/images/default-product.jpg'}}" 
+          mode="aspectFill"
+        />
+        <view class="product-status {{item.isQualified ? 'qualified' : 'unqualified'}}">
+          {{item.isQualified ? '合格' : '不合格'}}
+        </view>
+      </view>
+      
+      <view class="product-info">
+        <text class="product-name">{{item.name}}</text>
+        <text class="product-batch">批次: {{item.batch.batchCode || '无批次信息'}}</text>
+        <text class="product-origin" wx:if="{{item.origin}}">产地: {{item.origin}}</text>
+        <text class="product-date">
+          录入时间: {{item.created_at}}
+        </text>
+      </view>
+      
+      <view class="product-actions">
+        
+        <button 
+          class="action-btn qrcode-btn" 
+          bindtap="handleGenerateQrcode"
+          data-product="{{item}}"
+          catchtap="true"
+        >
+          生成二维码
+        </button>
+        <button 
+          class="action-btn delete-btn" 
+          bindtap="handleDelete"
+          data-id="{{item.id}}"
+          catchtap="true"
+        >
+          删除
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{filteredProducts.length === 0 && !loading}}">
+    <image src="/images/empty.png" mode="aspectFit" class="empty-image"/>
+    <text class="empty-text" wx:if="{{searchKeyword || filterIndex > 0}}">未找到匹配的产品</text>
+    <text class="empty-text" wx:else>暂无产品数据</text>
+    <text class="empty-subtext" wx:if="{{searchKeyword || filterIndex > 0}}">请尝试调整搜索条件或筛选条件</text>
+    <text class="empty-subtext" wx:else>点击下方按钮开始录入产品</text>
+    <button class="btn-primary" wx:if="{{searchKeyword || filterIndex > 0}}" bindtap="resetFilters">重置筛选</button>
+    <button class="btn-primary" wx:else bindtap="goToInput">录入产品</button>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading-state" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 二维码弹窗 -->
+  <view class="modal-overlay" wx:if="{{showQrcodeModal}}" bindtap="closeQrcodeModal">
+    <view class="modal-content" catchtap="true">
+      <view class="modal-header">
+        <text class="modal-title">生成的二维码</text>
+        <text class="modal-close" bindtap="closeQrcodeModal">×</text>
+      </view>
+      
+      <view class="qrcode-container">
+        <image 
+          class="qrcode-image" 
+          src="{{currentQrcode.imageUrl}}" 
+          mode="aspectFit"
+          bindtap="previewQrcode"
+        />
+        <text class="qrcode-tip">点击图片可放大查看</text>
+      </view>
+      
+      <view class="qrcode-info">
+        <text class="info-item">产品: {{currentQrcode.productName}}</text>
+        <text class="info-item">批次: {{currentQrcode.batchCode}}</text>
+        <text class="info-item">二维码ID: {{currentQrcode.qrcodeId}}</text>
+        <text class="info-item">生成时间: {{currentQrcode.generateTime}}</text>
+      </view>
+      
+      <view class="modal-actions">
+        <button class="btn-secondary" bindtap="downloadQrcode">
+          下载二维码
+        </button>
+        <button class="btn-primary" bindtap="saveToAlbum">
+          保存到相册
+        </button>
+      </view>
+    </view>
+  </view>
+
+</view>

@@ -1,0 +1,174 @@
+.products-page {
+  padding: 0;
+}
+
+.products-page .page-header {
+  margin-bottom: 24px;
+}
+
+.products-page .page-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 统计卡片样式 */
+.products-page .stats-row {
+  margin-bottom: 24px;
+}
+
+.products-page .stats-row .ant-card {
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.products-page .stats-row .ant-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 表格卡片样式 */
+.products-page .table-card {
+  margin-bottom: 24px;
+}
+
+.products-page .table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+/* 表格样式 */
+.products-page .ant-table {
+  border-radius: 8px;
+}
+
+.products-page .ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+}
+
+.products-page .ant-table-tbody > tr:hover > td {
+  background: #f5f5f5;
+}
+
+/* 标签样式 */
+.products-page .ant-tag {
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* 按钮样式 */
+.products-page .ant-btn {
+  border-radius: 6px;
+}
+
+.products-page .ant-btn-text {
+  padding: 4px 8px;
+}
+
+.products-page .ant-btn-text:hover {
+  background: #f5f5f5;
+}
+
+/* 模态框样式 */
+.products-page .ant-modal {
+  border-radius: 8px;
+}
+
+.products-page .ant-modal-header {
+  border-radius: 8px 8px 0 0;
+}
+
+.products-page .ant-form-item-label > label {
+  font-weight: 500;
+}
+
+/* 搜索框样式 */
+.products-page .ant-input-affix-wrapper {
+  border-radius: 6px;
+}
+
+/* 产品图片样式 */
+.products-page .ant-image {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* 产品类别颜色 */
+.products-page .product-category-vegetable {
+  background: #f6ffed;
+  border-color: #b7eb8f;
+  color: #52c41a;
+}
+
+.products-page .product-category-fruit {
+  background: #fff7e6;
+  border-color: #ffd591;
+  color: #fa8c16;
+}
+
+.products-page .product-category-grain {
+  background: #e6f7ff;
+  border-color: #91d5ff;
+  color: #1890ff;
+}
+
+/* 检测状态样式 */
+.products-page .test-qualified {
+  background: #f6ffed;
+  border-color: #b7eb8f;
+  color: #52c41a;
+}
+
+.products-page .test-unqualified {
+  background: #fff2f0;
+  border-color: #ffccc7;
+  color: #ff4d4f;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .products-page .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .products-page .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .products-page .stats-row .ant-col {
+    margin-bottom: 16px;
+  }
+  
+  .products-page .ant-table {
+    font-size: 12px;
+  }
+  
+  .products-page .ant-table-thead > tr > th,
+  .products-page .ant-table-tbody > tr > td {
+    padding: 8px 4px;
+  }
+}
+
+@media (max-width: 576px) {
+  .products-page .ant-table {
+    font-size: 11px;
+  }
+  
+  .products-page .ant-table-thead > tr > th,
+  .products-page .ant-table-tbody > tr > td {
+    padding: 6px 2px;
+  }
+  
+  .products-page .ant-btn-text {
+    padding: 2px 4px;
+    font-size: 12px;
+  }
+} 

@@ -1,0 +1,109 @@
+<!--systemStats.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="title">系统统计</text>
+    <text class="subtitle">查看系统整体数据统计</text>
+  </view>
+
+  <!-- 系统概览 -->
+  <view class="section" wx:if="{{systemStats}}">
+    <view class="section-title">系统概览</view>
+    <view class="stats-grid">
+      <view class="stat-card">
+        <text class="stat-number">{{systemStats.totalUsers}}</text>
+        <text class="stat-label">总用户数</text>
+      </view>
+      <view class="stat-card">
+        <text class="stat-number">{{systemStats.totalProducts}}</text>
+        <text class="stat-label">总产品数</text>
+      </view>
+      <view class="stat-card">
+        <text class="stat-number">{{systemStats.totalQrcodes}}</text>
+        <text class="stat-label">总二维码数</text>
+      </view>
+      <view class="stat-card">
+        <text class="stat-number">{{systemStats.totalScans}}</text>
+        <text class="stat-label">总扫码次数</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 产品统计 -->
+  <view class="section" wx:if="{{productStats}}">
+    <view class="section-title">产品统计</view>
+    <view class="stats-list">
+      <view class="stat-item">
+        <text class="stat-label">合格产品</text>
+        <text class="stat-value">{{productStats.qualifiedCount}}</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">不合格产品</text>
+        <text class="stat-value">{{productStats.unqualifiedCount}}</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">合格率</text>
+        <text class="stat-value">{{productStats.qualifiedRate}}%</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">本月新增</text>
+        <text class="stat-value">{{productStats.monthlyNew}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 企业统计 -->
+  <view class="section" wx:if="{{enterpriseStats}}">
+    <view class="section-title">企业统计</view>
+    <view class="stats-list">
+      <view class="stat-item">
+        <text class="stat-label">企业总数</text>
+        <text class="stat-value">{{enterpriseStats.totalEnterprises}}</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">活跃企业</text>
+        <text class="stat-value">{{enterpriseStats.activeEnterprises}}</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">企业产品总数</text>
+        <text class="stat-value">{{enterpriseStats.totalProducts}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 二维码统计 -->
+  <view class="section" wx:if="{{qrcodeStats}}">
+    <view class="section-title">二维码统计</view>
+    <view class="stats-list">
+      <view class="stat-item">
+        <text class="stat-label">已生成二维码</text>
+        <text class="stat-value">{{qrcodeStats.totalGenerated}}</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">已扫描二维码</text>
+        <text class="stat-value">{{qrcodeStats.totalScanned}}</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">平均扫描次数</text>
+        <text class="stat-value">{{qrcodeStats.averageScans}}</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">本月新增</text>
+        <text class="stat-value">{{qrcodeStats.monthlyNew}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="actions">
+    <button 
+      class="btn-primary" 
+      bindtap="refreshData"
+      loading="{{loading}}"
+    >
+      刷新数据
+    </button>
+    <button class="btn-secondary" bindtap="goBack">
+      返回
+    </button>
+  </view>
+</view> 
