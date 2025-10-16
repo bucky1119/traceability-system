@@ -4,6 +4,27 @@
 
 USE `traceability_system`;
 
+-- ================= 关键：处理外键约束，安全清除原有数据 =================
+-- 1. 临时关闭外键检查（避免子表引用拦截主表清空）
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- 2. 按“子表→主表”顺序清空（子表是依赖主表的表，如 environments 依赖 batches）
+-- 最底层子表（无其他表引用它们）
+TRUNCATE TABLE `qrcodes`;       -- 依赖 batches、products
+TRUNCATE TABLE `actions`;       -- 依赖 batches、users
+TRUNCATE TABLE `environments`;  -- 依赖 batches
+-- 中间层表（被底层子表引用）
+TRUNCATE TABLE `batches`;       -- 依赖 products
+TRUNCATE TABLE `products`;      -- 无外键依赖（或依赖其他表，需按实际调整）
+TRUNCATE TABLE `users`;         -- 依赖 roles、enterprises
+-- 顶层主表（无其他表依赖，或仅被中间层引用）
+TRUNCATE TABLE `enterprises`;   -- 无外键依赖
+TRUNCATE TABLE `roles`;         -- 无外键依赖
+
+-- 3. 恢复外键检查（保证后续数据插入符合约束）
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- ================= 以下为原有插入初始化数据逻辑 =================
 -- 插入默认角色
 INSERT INTO `roles` (`name`, `description`, `type`) VALUES
 ('系统管理员', '拥有系统所有权限的管理员', 'admin'),
@@ -26,7 +47,7 @@ INSERT INTO `users` (`username`, `password`, `tel`, `role_id`, `enterprise_id`) 
 ('producer2', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '13800138002', 2, 2);
 
 -- 插入示例产品
-INSERT INTO `products` (`name`, `producer_id`, `origin`, `planting_date`, `harvest_date`, `test_type`, `test_date`, `is_qualified`,'producer_name','producer_tel','producer_enterprise') VALUES
+INSERT INTO `products` (`name`, `producer_id`, `origin`, `planting_date`, `harvest_date`, `test_type`, `test_date`, `is_qualified`,`producer_name`,`producer_tel`,`producer_enterprise`) VALUES
 ('有机黄瓜', 2, '北京市朝阳区绿色农业园区', '2024-01-15', '2024-03-15', '农残检测', '2024-03-10', TRUE,'张三','13800138001','绿色蔬菜种植基地' ),
 ('无公害番茄', 3, '上海市浦东新区有机农业示范区', '2024-02-01', '2024-04-01', '重金属检测', '2024-03-25', TRUE,'李四','13800138002','有机农场合作社'),
 ('生态生菜', 2, '北京市朝阳区绿色农业园区', '2024-01-20', '2024-03-20', '农残检测', '2024-03-15', TRUE,'王五','13800138003','生态农业科技公司');
@@ -54,7 +75,7 @@ INSERT INTO `actions` (`batch_id`, `action_type`, `description`, `operator_id`, 
 (3, 'planting', '播种生态生菜种子', 2, '2024-01-20 09:00:00');
 
 -- 插入示例二维码
-INSERT INTO `qrcodes` (`qrcode_id`, `batch_id`, `product_id`, `link`, `status`,) VALUES
+INSERT INTO `qrcodes` (`qrcode_id`, `batch_id`, `product_id`, `link`, `status`) VALUES
 ('QR001', 1, 1, 'https://your-domain.com/trace/QR001', 1),
 ('QR002', 2, 2, 'https://your-domain.com/trace/QR002', 1),
-('QR003', 3, 3, 'https://your-domain.com/trace/QR003', 1); 
+('QR003', 3, 3, 'https://your-domain.com/trace/QR003', 1);

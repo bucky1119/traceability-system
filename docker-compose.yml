@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: traceability-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_DATABASE: "traceability_system"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./backend/init-sql:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p\"123456\" > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: traceability-backend:latest
+    container_name: traceability-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: root
+      DB_PASSWORD: "123456"
+      DB_DATABASE: traceability_system
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend/uploads:/app/uploads
+
+volumes:
+  db_data:
