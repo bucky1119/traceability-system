@@ -9,12 +9,20 @@
 ```bash
 cd /Users/csg/项目/traceability-system
 
-# 构建后端镜像
-docker build -t traceability-backend_v1 ./backend
+## 本地开发热部署启动容器
+docker run --rm -it \
+  --name traceability-dev \
+  -p 3000:3000 \
+  -v "$(pwd)":/usr/src/app \
+  -v /usr/src/app/node_modules \
+  -e DB_HOST=host.docker.internal \
+  -e DB_PORT=3306 \
+  -e DB_USERNAME=root \
+  -e DB_PASSWORD=123456 \
+  -e DB_DATABASE=traceability_system_2 \
+  traceability-backend \
+  npm run start:dev
 
-# 推送到镜像仓库（Docker Hub 示例）
-docker tag traceability-backend_v1 bucky1119/traceability-backend_v1
-docker push bucky1119/traceability-backend_v1
 ```
 
 ## 服务器上部署

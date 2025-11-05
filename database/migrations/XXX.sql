@@ -56,7 +56,7 @@ CREATE TABLE `safety_inspections` (
   `inspection_time` DATETIME NOT NULL COMMENT '检测时间',
   `result_image_url` VARCHAR(255) DEFAULT NULL COMMENT '检测结果图片URL',
   `manual_result` ENUM('合格', '不合格') NOT NULL COMMENT '手动输入的检测结果',
-  `component_analysis` TEXT DEFAULT NULL COMMENT '产品成分检测文字描述',
+  `component_analysis` TEXT DEFAULT NULL COMMENT '产品成分检测结果文',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`),
   FOREIGN KEY (`batch_id`) REFERENCES `product_batches`(`id`)
