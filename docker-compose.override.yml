@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  backend:
+    # 使用一个包含完整开发工具链的 Node 镜像
+    image: node:18
+    container_name: traceability-backend-dev
+    # 设置工作目录，确保 npm 命令在正确的路径下执行
+    working_dir: /app
+    # 覆盖生产环境的启动命令，改为开发模式
+    command: sh -c "npm install && npm run start:dev"
+    volumes:
+      # 挂载源代码，实现热重载
+      - ./backend:/app
+      # 创建一个匿名卷来“隐藏”容器内的 node_modules，防止与本地的 node_modules 冲突
+      # 这样可以确保容器使用它自己在 Dockerfile 中安装的依赖
+      - /app/node_modules
+    ports:
+      # 可以额外映射一个调试端口
+      - "9229:9229"
+    environment:
+      # 确保环境是开发模式
+      NODE_ENV: development
+      # 如果需要，可以在这里覆盖其他环境变量
+      # DB_HOST: mysql

@@ -43,18 +43,19 @@ api.interceptors.response.use(
   }
 );
 
-// 用户管理API
-export const userAPI = {
-  // 获取用户列表
-  getUsers: (params) => api.get('/users', { params }),
-  // 获取单个用户
-  getUser: (id) => api.get(`/users/${id}`),
-  // 创建用户
-  createUser: (data) => api.post('/users', data),
-  // 更新用户
-  updateUser: (id, data) => api.put(`/users/${id}`, data),
-  // 删除用户
-  deleteUser: (id) => api.delete(`/users/${id}`),
+// 农户（生产者）管理API
+export const producerAPI = {
+  getProducers: (params) => api.get('/producers', { params }),
+  getProducer: (id) => api.get(`/producers/${id}`),
+  createProducer: (data) => api.post('/producers', data),
+  updateProducer: (id, data) => api.patch(`/producers/${id}`, data),
+  // 如需要删除可补充对应后端接口
+};
+
+// 管理员管理API
+export const adminAPI = {
+  getAdmins: () => api.get('/admins'),
+  createAdmin: (data) => api.post('/admins', data),
 };
 
 // 企业管理API
@@ -71,50 +72,38 @@ export const enterpriseAPI = {
   deleteEnterprise: (id) => api.delete(`/enterprises/${id}`),
 };
 
-// 产品管理API
-export const productAPI = {
-  // 获取产品列表
-  getProducts: (params) => api.get('/products', { params }),
-  // 获取单个产品
-  getProduct: (id) => api.get(`/products/${id}`),
-  // 创建产品
-  createProduct: (data) => api.post('/products', data),
-  // 更新产品
-  updateProduct: (id, data) => api.put(`/products/${id}`, data),
-  // 删除产品
-  deleteProduct: (id) => api.delete(`/products/${id}`),
+// 产品批次管理API（与后端 product-batches 对齐）
+export const productBatchAPI = {
+  getBatches: (params) => api.get('/product-batches', { params }),
+  getBatch: (id) => api.get(`/product-batches/${id}`),
+  createBatch: (data) => api.post('/product-batches', data),
+  updateBatch: (id, data) => api.patch(`/product-batches/${id}`, data),
+  deleteBatch: (id) => api.delete(`/product-batches/${id}`),
+  exportCsv: (producerId) => api.get('/product-batches/export', { params: producerId ? { producerId } : {}, responseType: 'blob' }),
 };
 
-// 二维码管理API
+// 二维码管理API（与后端 qr-codes 路由对齐）
 export const qrcodeAPI = {
   // 获取二维码列表
-  getQrcodes: (params) => api.get('/qrcodes', { params }),
+  getQrcodes: (params) => api.get('/qr-codes', { params }),
   // 获取单个二维码
-  getQrcode: (id) => api.get(`/qrcodes/${id}`),
+  getQrcode: (id) => api.get(`/qr-codes/${id}`),
   // 创建二维码
-  createQrcode: (data) => api.post('/qrcodes', data),
+  createQrcode: (data) => api.post('/qr-codes', data),
   // 批量创建二维码
-  batchCreateQrcodes: (data) => api.post('/qrcodes/batch', data),
+  batchCreateQrcodes: (data) => api.post('/qr-codes/batch', data),
   // 更新二维码
-  updateQrcode: (id, data) => api.put(`/qrcodes/${id}`, data),
+  updateQrcode: (id, data) => api.put(`/qr-codes/${id}`, data),
   // 删除二维码
-  deleteQrcode: (id) => api.delete(`/qrcodes/${id}`),
+  deleteQrcode: (id) => api.delete(`/qr-codes/${id}`),
   // 下载二维码
-  downloadQrcode: (id) => api.get(`/qrcodes/${id}/download`),
+  downloadQrcode: (id) => api.get(`/qr-codes/${id}/download`),
 };
 
 // 统计API
 export const statsAPI = {
-  // 获取仪表盘统计
+  // 仪表盘统计（后端提供 /stats/dashboard）
   getDashboardStats: () => api.get('/stats/dashboard'),
-  // 获取用户统计
-  getUserStats: () => api.get('/stats/users'),
-  // 获取企业统计
-  getEnterpriseStats: () => api.get('/stats/enterprises'),
-  // 获取产品统计
-  getProductStats: () => api.get('/stats/products'),
-  // 获取二维码统计
-  getQrcodeStats: () => api.get('/stats/qrcodes'),
 };
 
 export default api; 

@@ -19,9 +19,9 @@
         data-farmer="{{farmer}}"
       >
         <view class="farmer-info">
-          <text class="farmer-name">{{farmer.username}}</text>
-          <text class="farmer-enterprise">{{farmer.enterprise}}</text>
-          <text class="farmer-stats">产品数量: {{farmer.productCount}}</text>
+          <text class="farmer-name">{{farmer.account}}{{farmer.name ? (' - ' + farmer.name) : ''}}</text>
+          <text class="farmer-enterprise" wx:if="{{farmer.phone}}">{{farmer.phone}}</text>
+          <text class="farmer-stats" wx:if="{{farmer.created_at}}">注册: {{farmer.created_at}}</text>
         </view>
         <view class="farmer-actions">
           <button 
@@ -39,7 +39,7 @@
 
   <!-- 农户产品列表 -->
   <view class="section" wx:if="{{selectedFarmer}}">
-    <view class="section-title">{{selectedFarmer.username}} 的产品</view>
+  <view class="section-title">{{selectedFarmer.account}}{{selectedFarmer.name ? (' - ' + selectedFarmer.name) : ''}} 的产品</view>
     
     <view class="product-list">
       <view 
@@ -51,15 +51,15 @@
         data-product="{{product}}"
       >
         <view class="product-info">
-          <text class="product-name">{{product.name}}</text>
+          <text class="product-name">{{product.vegetableName}}</text>
           <text class="product-origin">{{product.origin}}</text>
           <text class="product-status {{product.isQualified ? 'qualified' : 'unqualified'}}">
             {{product.isQualified ? '合格' : '不合格'}}
           </text>
         </view>
         <view class="product-dates">
-          <text class="date-item">种植: {{product.plantingDate}}</text>
-          <text class="date-item">收获: {{product.harvestDate}}</text>
+          <text class="date-item">种植: {{product.plantingTime}}</text>
+          <text class="date-item">收获: {{product.harvestTime}}</text>
         </view>
       </view>
     </view>

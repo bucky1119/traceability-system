@@ -262,6 +262,12 @@
   color: #fff;
 }
 
+/* 已有二维码时的保存按钮，使用清晰的绿色系 */
+.qrcode-save-btn {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  color: #fff;
+}
+
 .delete-btn {
   background: #ff4757;
   color: #fff;
@@ -295,6 +301,16 @@
 
 .btn-primary {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 25rpx;
+  padding: 20rpx 40rpx;
+  font-size: 28rpx;
+}
+
+/* 保存类操作使用绿色，提升语义辨识度 */
+.btn-success {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
   color: #fff;
   border: none;
   border-radius: 25rpx;
@@ -414,6 +430,17 @@
   flex: 1;
   height: 70rpx;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 35rpx;
+  font-size: 28rpx;
+}
+
+/* 弹窗中的保存操作使用绿色按钮 */
+.modal-actions .btn-success {
+  flex: 1;
+  height: 70rpx;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
   color: #fff;
   border: none;
   border-radius: 35rpx;

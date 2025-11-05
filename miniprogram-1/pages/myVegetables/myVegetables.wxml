@@ -1,7 +1,7 @@
 <view class="container">
   <view class="header">
     <text class="title">我的产品</text>
-    <text class="subtitle">管理您录入的所有蔬菜产品</text>
+    <text class="subtitle">{{userRole === 'admin' ? '管理系统内所有产品' : '管理您录入的所有蔬菜产品'}}</text>
   </view>
 
   <!-- 统计卡片 -->
@@ -25,7 +25,7 @@
     <view class="search-input-container">
       <input 
         class="search-input" 
-        placeholder="搜索产品名称或批次编号" 
+        placeholder="搜索产品名称、品种、产地或农户名" 
         value="{{searchKeyword}}"
         bindinput="onSearchInput"
       />
@@ -81,7 +81,8 @@
       
       <view class="product-info">
         <text class="product-name">{{item.name}}</text>
-        <text class="product-batch">批次: {{item.batch.batchCode || '无批次信息'}}</text>
+  <text class="product-batch">品种: {{item.variety || '—'}}</text>
+        <text class="product-producer" wx:if="{{userRole === 'admin' && item.producerName}}">农户: {{item.producerName}}</text>
         <text class="product-origin" wx:if="{{item.origin}}">产地: {{item.origin}}</text>
         <text class="product-date">
           录入时间: {{item.created_at}}
@@ -89,20 +90,26 @@
       </view>
       
       <view class="product-actions">
-        
         <button 
           class="action-btn qrcode-btn" 
-          bindtap="handleGenerateQrcode"
+          wx:if="{{!(item.qrCodes && item.qrCodes.length > 0)}}"
+          catchtap="handleGenerateQrcode"
           data-product="{{item}}"
-          catchtap="true"
         >
           生成二维码
         </button>
+        <button
+          class="action-btn qrcode-save-btn"
+          wx:else
+          catchtap="handleSaveExistingQrcode"
+          data-product="{{item}}"
+        >
+          保存二维码
+        </button>
         <button 
           class="action-btn delete-btn" 
-          bindtap="handleDelete"
+          catchtap="handleDelete"
           data-id="{{item.id}}"
-          catchtap="true"
         >
           删除
         </button>
@@ -146,8 +153,7 @@
       
       <view class="qrcode-info">
         <text class="info-item">产品: {{currentQrcode.productName}}</text>
-        <text class="info-item">批次: {{currentQrcode.batchCode}}</text>
-        <text class="info-item">二维码ID: {{currentQrcode.qrcodeId}}</text>
+        <text class="info-item">代码: {{currentQrcode.code}}</text>
         <text class="info-item">生成时间: {{currentQrcode.generateTime}}</text>
       </view>
       
@@ -155,7 +161,7 @@
         <button class="btn-secondary" bindtap="downloadQrcode">
           下载二维码
         </button>
-        <button class="btn-primary" bindtap="saveToAlbum">
+        <button class="btn-success" bindtap="saveToAlbum">
           保存到相册
         </button>
       </view>

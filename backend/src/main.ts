@@ -5,6 +5,7 @@ import { AppModule } from './app.module';
 import { HttpException, ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 
 @Catch(HttpException)
 class GlobalHttpExceptionFilter implements ExceptionFilter {
@@ -41,10 +42,13 @@ async function bootstrap() {
   // 全局异常过滤器
   app.useGlobalFilters(new GlobalHttpExceptionFilter());
 
-  // 静态文件服务
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: '/uploads/',
-  });
+  // 确保静态目录存在（uploads/images 与 uploads/qrcodes）
+  const uploadsRoot = join(__dirname, '..', 'uploads');
+  const imagesDir = join(uploadsRoot, 'images');
+  const qrcodesDir = join(uploadsRoot, 'qrcodes');
+  if (!existsSync(uploadsRoot)) mkdirSync(uploadsRoot, { recursive: true });
+  if (!existsSync(imagesDir)) mkdirSync(imagesDir, { recursive: true });
+  if (!existsSync(qrcodesDir)) mkdirSync(qrcodesDir, { recursive: true });
 
   // CORS配置
   app.enableCors({

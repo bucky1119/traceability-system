@@ -1,435 +1,417 @@
-import { productAPI, qrcodeAPI, utils } from '../../utils/api.js';
+import { productAPI, safetyAPI, qrcodeAPI, utils } from '../../utils/api.js';
+const config = require('../../config.js');
 
 Page({
   data: {
-    product: null,
-    qrcodes: [],
     loading: false,
-    
-    // 二维码弹窗
+    id: null,
+    product: null,
+    imageFullUrl: '',
+    // 只读模式（扫码进入）
+    viewOnly: false,
+    // 二维码
+    qrcodes: [],
     showQrcodeModal: false,
-    currentQrcode: null
+    currentQrcode: null,
+
+    // 产品编辑
+    editProductMode: false,
+    productForm: {
+      name: '',
+      vegetableVariety: '',
+      origin: '',
+      plantingDate: '',
+      harvestDate: '',
+      description: '',
+      imageUrlLocal: '' // 本地临时图片路径（选择后）
+    },
+
+    // 安检
+    safetyInspections: [],
+    showSafetyModal: false,
+    safetyForm: {
+      id: null, // 为空表示新建
+      riskFactorType: '',
+      inspectionDate: '',
+      componentAnalysis: '',
+      isQualified: false,
+      resultImageLocal: ''
+    },
   },
 
   onLoad(options) {
-    console.log('详情页面加载，参数:', options);
-    const { id } = options;
-    if (!id || isNaN(Number(id))) {
-      console.log('产品ID无效:', id);
-      wx.showToast({
-        title: '产品ID无效',
-        icon: 'none'
-      });
-      return;
-    }
-    console.log('设置产品ID:', id);
-    this.setData({ productId: id });
-    this.loadProductDetail(id);
-    this.loadProductQrcodes(id);
-  },
-
-  // 页面显示时刷新数据（用于编辑后返回）
-  onShow() {
-    if (this.data.productId) {
-      this.loadProductDetail(this.data.productId);
-      this.loadProductQrcodes(this.data.productId);
-    }
-  },
-
-  // 加载产品详情
-  async loadProductDetail(id) {
-    console.log('开始加载产品详情，ID:', id);
-    this.setData({ loading: true });
-
-    try {
-      const product = await productAPI.getProductDetail(id);
-      console.log('获取到产品数据:', product);
-      
-      // 格式化日期
-      const formattedProduct = {
-        ...product,
-        created_at: utils.formatDate(product.created_at),
-        plantingDate: utils.formatDate(product.plantingDate),
-        harvestDate: utils.formatDate(product.harvestDate),
-        testDate: utils.formatDate(product.testDate),
-        batch: {
-          ...product.batch,
-          createTime: utils.formatDate(product.batch.createTime)
-        }
-      };
-
-      console.log('格式化后的产品数据:', formattedProduct);
-      this.setData({
-        product: formattedProduct,
-        loading: false
-      });
-
-    } catch (error) {
-      console.error('加载产品详情失败:', error);
-      this.setData({ loading: false });
-      wx.showToast({
-        title: '加载失败',
-        icon: 'none'
-      });
-    }
-  },
-
-  // 加载产品二维码
-  async loadProductQrcodes(productId) {
-    try {
-      const qrcodes = await qrcodeAPI.getQrcodes({ productId });
-      
-      // 格式化日期
-      const formattedQrcodes = qrcodes.map(qrcode => ({
-        ...qrcode,
-        generateTime: utils.formatDateTime(qrcode.generateTime)
-      }));
-
-      this.setData({
-        qrcodes: formattedQrcodes
-      });
-
-    } catch (error) {
-      console.error('加载二维码失败:', error);
-    }
-  },
-
-  // 编辑产品
-  handleEdit() {
-    console.log('编辑产品按钮被点击');
-    console.log('当前产品数据:', this.data.product);
-    
-    const { id } = this.data.product;
+    const id = options?.id ? Number(options.id) : null;
     if (!id) {
-      console.log('产品ID无效:', id);
-      wx.showToast({
-        title: '产品ID无效',
-        icon: 'none'
-      });
+      wx.showToast({ title: '参数缺失', icon: 'none' });
+      setTimeout(() => wx.navigateBack(), 1200);
       return;
     }
-    
-    console.log('准备跳转到编辑页面，产品ID:', id);
-    wx.navigateTo({
-      url: `/pages/input/input?id=${id}&mode=edit`,
-      success: () => {
-        console.log('跳转成功');
-      },
-      fail: (error) => {
-        console.error('跳转失败:', error);
-        wx.showToast({
-          title: '页面跳转失败',
-          icon: 'none'
-        });
-      }
-    });
+    const viewOnly = (options?.view === 'readonly') || (options?.viewOnly === '1') || (options?.readonly === '1');
+    this.setData({ id, viewOnly });
+    this.loadProduct();
+  },
+
+  buildOriginBase() {
+    const apiBase = config.getBaseUrl();
+    return apiBase.replace(/\/api\/?$/, '');
+  },
+
+  async loadProduct() {
+    this.setData({ loading: true });
+    try {
+      const p = await productAPI.getProductDetail(this.data.id);
+      const originBase = this.buildOriginBase();
+      const imageFullUrl = p.imageUrl ? `${originBase}${p.imageUrl}` : '';
+      const plantingDateDisplay = p.plantingTime ? utils.formatDate(p.plantingTime) : '';
+      const harvestDateDisplay = p.harvestTime ? utils.formatDate(p.harvestTime) : '';
+      const producerName = p.producer ? (p.producer.name || p.producer.account || '') : '';
+      const producerPhone = p.producer ? (p.producer.phone || '') : '';
+
+      const safetyInspections = Array.isArray(p.safetyInspections) ? p.safetyInspections.map(si => ({
+        ...si,
+        inspectionDate: utils.formatDate(si.inspectionTime),
+        isQualified: si.manualResult === '合格',
+        resultImageFullUrl: si.result_image_url ? `${originBase}${si.result_image_url}` : ''
+      })) : [];
+
+      // 映射二维码列表（如果后端返回了 qrCodes）
+      const qrcodes = Array.isArray(p.qrCodes)
+        ? p.qrCodes.map((q) => ({
+            code: q.codeData,
+            imageUrl: qrcodeAPI.getQrcodeImageInfo(q.codeData).imageUrl,
+            scanCount: q.scanCount || 0,
+            generateTime: utils.formatDateTime(q.createdAt),
+          }))
+        : [];
+
+      this.setData({
+        product: p,
+        imageFullUrl,
+        plantingDateDisplay,
+        harvestDateDisplay,
+        producerName,
+        producerPhone,
+        qrcodes,
+        safetyInspections,
+        loading: false,
+      });
+    } catch (e) {
+      console.error('加载详情失败:', e);
+      this.setData({ loading: false });
+      wx.showToast({ title: '加载失败', icon: 'none' });
+    }
   },
 
   // 生成二维码
   async handleGenerateQrcode() {
-    const { id, batch } = this.data.product;
-    
-    wx.showLoading({
-      title: '生成中...'
-    });
-
+    if (this._genLock) return;
+    this._genLock = true;
+    wx.showLoading({ title: '生成中...' });
     try {
-      const qrcode = await qrcodeAPI.createQrcode({
-        productId: id,
-        batchId: batch.id
-      });
-
-      // 获取二维码图片信息
-      const imageInfo = await qrcodeAPI.getQrcodeImageInfo(qrcode.qrcodeId);
-
+      const res = await qrcodeAPI.createQrcode(this.data.id);
+      const code = res?.qrCodeEntity?.codeData || res?.code || res?.data?.code;
+      const imageInfo = qrcodeAPI.getQrcodeImageInfo(code);
       this.setData({
         showQrcodeModal: true,
         currentQrcode: {
-          ...qrcode,
-          ...imageInfo,
-          productName: this.data.product.name,
-          batchCode: this.data.product.batch.batchCode,
-          generateTime: utils.formatDateTime(qrcode.generateTime),
-          // 确保图片URL字段一致
-          imageUrl: imageInfo.qrcodeImageUrl || qrcode.qrcodeImageUrl
-        }
+          code,
+          imageUrl: imageInfo.imageUrl,
+          productName: this.data.product?.vegetableName || '',
+          generateTime: utils.formatDateTime(new Date()),
+        },
       });
-
-      // 重新加载二维码列表
-      this.loadProductQrcodes(id);
-
-      wx.hideLoading();
-      wx.showToast({
-        title: '二维码生成成功',
-        icon: 'success'
-      });
-
-    } catch (error) {
-      wx.hideLoading();
-      console.error('生成二维码失败:', error);
-      wx.showToast({
-        title: '生成失败',
-        icon: 'none'
-      });
+      await this.loadProduct(); // 刷新列表
+      wx.showToast({ title: '生成成功', icon: 'success' });
+    } catch (e) {
+      console.error('生成二维码失败:', e);
+      wx.showToast({ title: '生成失败', icon: 'none' });
     }
+    wx.hideLoading();
+    this._genLock = false;
   },
 
-  // 删除产品
-  handleDelete() {
-    const { id, name } = this.data.product;
-    
+  previewQrcode(e) {
+    const { qrcode } = e.currentTarget.dataset;
+    if (!qrcode?.imageUrl) return;
+    wx.previewImage({ urls: [qrcode.imageUrl], current: qrcode.imageUrl });
+  },
+
+  async saveQrcodeToAlbum(e) {
+    const { qrcode } = e.currentTarget.dataset;
+    if (!qrcode?.code) return;
+    try {
+      wx.showLoading({ title: '保存中...' });
+      const tempFilePath = await qrcodeAPI.downloadQrcodeImage(qrcode.code);
+      await wx.saveImageToPhotosAlbum({ filePath: tempFilePath });
+      wx.showToast({ title: '已保存到相册', icon: 'success' });
+    } catch (err) {
+      console.error('保存二维码失败:', err);
+      wx.showToast({ title: '保存失败', icon: 'none' });
+    }
+    wx.hideLoading();
+  },
+
+  closeQrcodeModal() {
+    this.setData({ showQrcodeModal: false, currentQrcode: null });
+  },
+
+  previewCurrentQrcode() {
+    const imageUrl = this.data.currentQrcode?.imageUrl;
+    if (!imageUrl) return;
+    wx.previewImage({ urls: [imageUrl], current: imageUrl });
+  },
+
+  async saveToAlbum() {
+    const code = this.data.currentQrcode?.code;
+    if (!code) return;
+    try {
+      wx.showLoading({ title: '保存中...' });
+      const tempFilePath = await qrcodeAPI.downloadQrcodeImage(code);
+      await wx.saveImageToPhotosAlbum({ filePath: tempFilePath });
+      wx.showToast({ title: '已保存到相册', icon: 'success' });
+    } catch (err) {
+      console.error('保存失败:', err);
+      wx.showToast({ title: '保存失败', icon: 'none' });
+    }
+    wx.hideLoading();
+  },
+
+  // 切换产品编辑模式
+  enterEditProduct() {
+    if (this.data.viewOnly) return;
+    const p = this.data.product || {};
+    this.setData({
+      editProductMode: true,
+      productForm: {
+        name: p.vegetableName || '',
+        vegetableVariety: p.vegetableVariety || '',
+        origin: p.origin || '',
+        plantingDate: p.plantingTime ? utils.formatDate(p.plantingTime) : '',
+        harvestDate: p.harvestTime ? utils.formatDate(p.harvestTime) : '',
+        description: p.description || '',
+        imageUrlLocal: ''
+      }
+    });
+  },
+  cancelEditProduct() {
+    this.setData({ editProductMode: false });
+  },
+
+  onProductInput(e) {
+    const { field } = e.currentTarget.dataset;
+    const { value } = e.detail;
+    this.setData({ [`productForm.${field}`]: value });
+  },
+  onProductDateChange(e) {
+    const { field } = e.currentTarget.dataset;
+    const { value } = e.detail;
+    this.setData({ [`productForm.${field}`]: value });
+  },
+  chooseProductImage() {
+    wx.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: (res) => {
+        const tempFilePath = res.tempFilePaths[0];
+        wx.compressImage({
+          src: tempFilePath,
+          quality: 80,
+          success: (c) => this.setData({ 'productForm.imageUrlLocal': c.tempFilePath }),
+          fail: () => this.setData({ 'productForm.imageUrlLocal': tempFilePath })
+        });
+      }
+    });
+  },
+  previewProductImage() {
+    const url = this.data.imageFullUrl;
+    if (!url) return;
+    wx.previewImage({ urls: [url], current: url });
+  },
+
+  validateProductForm() {
+    const f = this.data.productForm;
+    if (!f.name || !f.name.trim()) { wx.showToast({ title: '请输入产品名称', icon: 'none' }); return false; }
+    if (!f.origin || !f.origin.trim()) { wx.showToast({ title: '请输入产地', icon: 'none' }); return false; }
+    if (!f.plantingDate || !f.harvestDate) { wx.showToast({ title: '请选择种植与收获日期', icon: 'none' }); return false; }
+    return true;
+  },
+
+  async saveProduct() {
+    if (!this.validateProductForm()) return;
+    if (this._savingProduct) return;
+    this._savingProduct = true;
+    wx.showLoading({ title: '保存中...' });
+    try {
+      const id = this.data.id;
+      const f = this.data.productForm;
+      const toISO = (d) => (d ? `${d}T00:00:00Z` : undefined);
+      const payload = {
+        vegetableName: f.name,
+        vegetableVariety: f.vegetableVariety || undefined,
+        origin: f.origin,
+        plantingTime: toISO(f.plantingDate),
+        harvestTime: toISO(f.harvestDate),
+        description: f.description || undefined,
+      };
+
+      // 先更新基本信息
+      await productAPI.updateProduct(id, payload);
+      // 再更新图片（如选择了本地图片）
+      if (f.imageUrlLocal) {
+        await productAPI.updateProductImage({ id, filePath: f.imageUrlLocal });
+      }
+      wx.hideLoading();
+      wx.showToast({ title: '已保存', icon: 'success' });
+      this.setData({ editProductMode: false });
+      this.loadProduct();
+    } catch (e) {
+      wx.hideLoading();
+      console.error('保存失败:', e);
+      wx.showToast({ title: '保存失败', icon: 'none' });
+    }
+    this._savingProduct = false;
+  },
+
+  // 安检相关
+  openCreateSafety() {
+    if (this.data.viewOnly) return;
+    this.setData({
+      showSafetyModal: true,
+      safetyForm: {
+        id: null,
+        riskFactorType: '',
+        inspectionDate: '',
+        componentAnalysis: '',
+        isQualified: false,
+        resultImageLocal: ''
+      }
+    });
+  },
+  openEditSafety(e) {
+    const { item } = e.currentTarget.dataset;
+    this.setData({
+      showSafetyModal: true,
+      safetyForm: {
+        id: item.id,
+        riskFactorType: item.riskFactorType || '',
+        inspectionDate: item.inspectionDate || '',
+        componentAnalysis: item.componentAnalysis || '',
+        isQualified: item.manualResult === '合格' || item.isQualified === true,
+        resultImageLocal: '',
+        existingImageUrl: item.resultImageFullUrl || ''
+      }
+    });
+  },
+  closeSafetyModal() {
+    this.setData({ showSafetyModal: false });
+  },
+  onSafetyInput(e) {
+    const { field } = e.currentTarget.dataset;
+    const { value } = e.detail;
+    this.setData({ [`safetyForm.${field}`]: value });
+  },
+  onSafetyDateChange(e) {
+    const { field } = e.currentTarget.dataset;
+    const { value } = e.detail;
+    this.setData({ [`safetyForm.${field}`]: value });
+  },
+  onSafetySwitch(e) {
+    const { value } = e.detail;
+    this.setData({ 'safetyForm.isQualified': value });
+  },
+  chooseSafetyImage() {
+    wx.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: (res) => {
+        const tmp = res.tempFilePaths[0];
+        wx.compressImage({ src: tmp, quality: 80, success: (c) => this.setData({ 'safetyForm.resultImageLocal': c.tempFilePath }), fail: () => this.setData({ 'safetyForm.resultImageLocal': tmp }) });
+      }
+    });
+  },
+
+  // 预览已有安检图片（列表或编辑弹窗中）
+  previewSafetyImage(e) {
+    const { url } = e.currentTarget.dataset;
+    if (!url) return;
+    wx.previewImage({ urls: [url], current: url });
+  },
+
+  validateSafetyForm() {
+    const s = this.data.safetyForm;
+    if (!s.riskFactorType || !s.riskFactorType.trim()) { wx.showToast({ title: '请输入风险因子类型', icon: 'none' }); return false; }
+    if (!s.inspectionDate) { wx.showToast({ title: '请选择检测日期', icon: 'none' }); return false; }
+    return true;
+  },
+
+  async saveSafety() {
+    if (!this.validateSafetyForm()) return;
+    if (this._savingSafety) return;
+    this._savingSafety = true;
+    wx.showLoading({ title: '保存中...' });
+    try {
+      const s = this.data.safetyForm;
+      const toISO = (d) => (d ? `${d}T00:00:00Z` : undefined);
+      const payloadCreate = {
+        batchId: this.data.id,
+        riskFactorType: s.riskFactorType,
+        inspectionTime: toISO(s.inspectionDate),
+        manualResult: s.isQualified ? '合格' : '不合格',
+        componentAnalysis: s.componentAnalysis || undefined,
+      };
+      const payloadUpdate = {
+        riskFactorType: s.riskFactorType,
+        inspectionTime: toISO(s.inspectionDate),
+        manualResult: s.isQualified ? '合格' : '不合格',
+        componentAnalysis: s.componentAnalysis || undefined,
+      };
+
+      if (s.id) {
+        // 更新
+        await safetyAPI.update(s.id, payloadUpdate);
+        if (s.resultImageLocal) {
+          await safetyAPI.updateImage({ id: s.id, filePath: s.resultImageLocal });
+        }
+      } else {
+        // 新建
+        if (s.resultImageLocal) {
+          await safetyAPI.createWithImage({ data: payloadCreate, filePath: s.resultImageLocal });
+        } else {
+          await safetyAPI.create(payloadCreate);
+        }
+      }
+      wx.hideLoading();
+      wx.showToast({ title: '已保存', icon: 'success' });
+      this.setData({ showSafetyModal: false });
+      this.loadProduct();
+    } catch (e) {
+      wx.hideLoading();
+      console.error('保存安检失败:', e);
+      wx.showToast({ title: '保存失败', icon: 'none' });
+    }
+    this._savingSafety = false;
+  },
+
+  // 删除安检
+  deleteSafety(e) {
+    const { id } = e.currentTarget.dataset;
     wx.showModal({
       title: '确认删除',
-      content: `确定要删除产品"${name}"吗？删除后无法恢复。`,
+      content: '确定要删除该安检记录吗？',
       success: async (res) => {
         if (res.confirm) {
           try {
-            await productAPI.deleteProduct(id);
-            
-            wx.showToast({
-              title: '删除成功',
-              icon: 'success'
-            });
-            
-            // 返回上一页
-            setTimeout(() => {
-              wx.navigateBack();
-            }, 1500);
-            
-          } catch (error) {
-            console.error('删除失败:', error);
-            wx.showToast({
-              title: '删除失败',
-              icon: 'none'
-            });
+            await safetyAPI.remove(id);
+            wx.showToast({ title: '已删除', icon: 'success' });
+            this.loadProduct();
+          } catch (err) {
+            wx.showToast({ title: '删除失败', icon: 'none' });
           }
         }
       }
     });
   },
-
-  // 预览二维码
-  previewQrcode(e) {
-    const { qrcode } = e.currentTarget.dataset;
-    
-    wx.previewImage({
-      urls: [qrcode.qrcodeImageUrl],
-      current: qrcode.qrcodeImageUrl
-    });
-  },
-
-  // 下载二维码列表中的二维码
-  async downloadQrcodeFromList(e) {
-    const { qrcode } = e.currentTarget.dataset;
-    
-    try {
-      wx.showLoading({
-        title: '保存中...'
-      });
-
-      const tempFilePath = await qrcodeAPI.downloadQrcodeImage(qrcode.qrcodeId);
-      
-      // 保存到相册
-      await wx.saveImageToPhotosAlbum({
-        filePath: tempFilePath
-      });
-      
-      wx.hideLoading();
-      
-      wx.showToast({
-        title: '已保存到相册',
-        icon: 'success'
-      });
-
-    } catch (error) {
-      wx.hideLoading();
-      console.error('保存失败:', error);
-      
-      if (error.errMsg && error.errMsg.includes('auth deny')) {
-        wx.showModal({
-          title: '权限提示',
-          content: '需要您授权保存图片到相册',
-          showCancel: false
-        });
-      } else {
-        wx.showToast({
-          title: '保存失败',
-          icon: 'none'
-        });
-      }
-    }
-  },
-
-  // 保存二维码列表中的二维码到相册
-  async saveQrcodeToAlbum(e) {
-    const { qrcode } = e.currentTarget.dataset;
-    
-    try {
-      wx.showLoading({
-        title: '保存中...'
-      });
-
-      const tempFilePath = await qrcodeAPI.downloadQrcodeImage(qrcode.qrcodeId);
-      
-      // 保存到相册
-      await wx.saveImageToPhotosAlbum({
-        filePath: tempFilePath
-      });
-      
-      wx.hideLoading();
-      
-      wx.showToast({
-        title: '已保存到相册',
-        icon: 'success'
-      });
-
-    } catch (error) {
-      wx.hideLoading();
-      console.error('保存失败:', error);
-      
-      if (error.errMsg && error.errMsg.includes('auth deny')) {
-        wx.showModal({
-          title: '权限提示',
-          content: '需要您授权保存图片到相册',
-          showCancel: false
-        });
-      } else {
-        wx.showToast({
-          title: '保存失败',
-          icon: 'none'
-        });
-      }
-    }
-  },
-
-  // 关闭二维码弹窗
-  closeQrcodeModal() {
-    this.setData({
-      showQrcodeModal: false,
-      currentQrcode: null
-    });
-  },
-
-  // 预览当前二维码
-  previewCurrentQrcode() {
-    if (!this.data.currentQrcode) return;
-    
-    const imageUrl = this.data.currentQrcode.imageUrl || this.data.currentQrcode.qrcodeImageUrl;
-    if (!imageUrl) {
-      wx.showToast({
-        title: '图片地址无效',
-        icon: 'none'
-      });
-      return;
-    }
-    
-    wx.previewImage({
-      urls: [imageUrl],
-      current: imageUrl
-    });
-  },
-
-  // 下载二维码
-  async downloadQrcode() {
-    if (!this.data.currentQrcode) return;
-    
-    try {
-      wx.showLoading({
-        title: '保存中...'
-      });
-
-      const tempFilePath = await qrcodeAPI.downloadQrcodeImage(this.data.currentQrcode.qrcodeId);
-      
-      // 保存到相册
-      await wx.saveImageToPhotosAlbum({
-        filePath: tempFilePath
-      });
-      
-      wx.hideLoading();
-      
-      wx.showToast({
-        title: '已保存到相册',
-        icon: 'success'
-      });
-
-    } catch (error) {
-      wx.hideLoading();
-      console.error('保存失败:', error);
-      
-      if (error.errMsg && error.errMsg.includes('auth deny')) {
-        wx.showModal({
-          title: '权限提示',
-          content: '需要您授权保存图片到相册',
-          showCancel: false
-        });
-      } else {
-        wx.showToast({
-          title: '保存失败',
-          icon: 'none'
-        });
-      }
-    }
-  },
-
-  // 保存二维码到相册（弹窗中的保存按钮）
-  async saveToAlbum() {
-    if (!this.data.currentQrcode) return;
-    
-    try {
-      wx.showLoading({
-        title: '保存中...'
-      });
-
-      const tempFilePath = await qrcodeAPI.downloadQrcodeImage(this.data.currentQrcode.qrcodeId);
-      
-      // 保存到相册
-      await wx.saveImageToPhotosAlbum({
-        filePath: tempFilePath
-      });
-      
-      wx.hideLoading();
-      
-      wx.showToast({
-        title: '已保存到相册',
-        icon: 'success'
-      });
-
-    } catch (error) {
-      wx.hideLoading();
-      console.error('保存失败:', error);
-      
-      if (error.errMsg && error.errMsg.includes('auth deny')) {
-        wx.showModal({
-          title: '权限提示',
-          content: '需要您授权保存图片到相册',
-          showCancel: false
-        });
-      } else {
-        wx.showToast({
-          title: '保存失败',
-          icon: 'none'
-        });
-      }
-    }
-  },
-
-  // 打开检测报告
-  openTestReport() {
-    const { testReport } = this.data.product;
-    if (testReport) {
-      wx.showModal({
-        title: '检测报告',
-        content: '是否打开检测报告链接？',
-        success: (res) => {
-          if (res.confirm) {
-            // 这里可以打开链接或下载文件
-            wx.showToast({
-              title: '功能开发中',
-              icon: 'none'
-            });
-          }
-        }
-      });
-    }
-  }
 });
+

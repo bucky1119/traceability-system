@@ -70,4 +70,4 @@ miniprogram-1/node_modules/
 *.sqlite3
 
 # 其他
-.tasks/
+.traceability-backend_v1.tar.gz
