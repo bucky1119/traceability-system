@@ -90,12 +90,11 @@ Page({
     this.setData({ loading: true });
     
     try {
-      await adminAPI.exportProducts();
-      
-      wx.showToast({
-        title: '导出成功',
-        icon: 'success'
-      });
+      const filePath = await adminAPI.downloadProductsCsv();
+      // 尝试用系统打开（部分设备可能不支持 CSV 预览）
+      wx.openDocument({ filePath, fileType: 'csv', showMenu: true, fail: () => {
+        wx.showToast({ title: '已下载CSV', icon: 'success' });
+      }});
       
     } catch (error) {
       console.error('导出失败:', error);
@@ -123,16 +122,10 @@ Page({
     this.setData({ loading: true });
     
     try {
-      const params = { farmerId };
-      if (startDate) params.startDate = startDate;
-      if (endDate) params.endDate = endDate;
-      
-      await adminAPI.exportProducts(params);
-      
-      wx.showToast({
-        title: '导出成功',
-        icon: 'success'
-      });
+      const filePath = await adminAPI.downloadProductsCsv({ producerId: farmerId });
+      wx.openDocument({ filePath, fileType: 'csv', showMenu: true, fail: () => {
+        wx.showToast({ title: '已下载CSV', icon: 'success' });
+      }});
       
     } catch (error) {
       console.error('导出失败:', error);

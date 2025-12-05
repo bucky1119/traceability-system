@@ -5,10 +5,12 @@
     "pages/input/input",
     "pages/myVegetables/myVegetables",
     "pages/userCenter/userCenter",
+    "pages/admin/adminCreate/adminCreate",
     "pages/admin/farmerInput/farmerInput",
     "pages/admin/productExport/productExport",
     "pages/admin/farmerManagement/farmerManagement",
-    "pages/admin/systemStats/systemStats"
+    "pages/admin/systemStats/systemStats",
+    "pages/admin/registrationCode/registrationCode"
   ],
   "window": {
     "backgroundTextStyle": "light",

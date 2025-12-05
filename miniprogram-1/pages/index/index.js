@@ -1,4 +1,5 @@
 import { productAPI, qrcodeAPI, utils } from '../../utils/api.js';
+const config = require('../../config.js');
 
 Page({
   data: {
@@ -27,7 +28,7 @@ Page({
   },
 
   onLoad() {
-    this.loadProducts();
+    // 仅在开发+mock模式下做一次模拟数据自检
     this.testMockData();
   },
 
@@ -39,10 +40,12 @@ Page({
   // 测试模拟数据
   async testMockData() {
     try {
-      const products = await productAPI.getProducts();
-      this.setData({
-        mockDataStatus: `模拟数据正常，共${products.length}个产品`
-      });
+        if (config && config.env === 'development' && config.useMockData) {
+          const products = await productAPI.getProducts();
+          this.setData({ mockDataStatus: `模拟数据正常，共${(products || []).length}个产品` });
+        } else {
+          this.setData({ mockDataStatus: '未启用模拟数据' });
+        }
     } catch (error) {
       this.setData({
         mockDataStatus: '模拟数据测试失败'
@@ -52,19 +55,36 @@ Page({
 
   // 加载产品列表
   async loadProducts() {
+    if (this._loadingLock) return;
+    this._loadingLock = true;
     this.setData({ loading: true });
 
     try {
-      const products = await productAPI.getProducts();
-      
-      // 格式化日期
-      const formattedProducts = products.map(product => ({
-        ...product,
-        created_at: utils.formatDate(product.created_at),
-        plantingDate: utils.formatDate(product.plantingDate),
-        harvestDate: utils.formatDate(product.harvestDate),
-        testDate: utils.formatDate(product.testDate)
-      }));
+      const list = await productAPI.getProducts();
+      const originBase = (config.getBaseUrl && config.getBaseUrl()) ? config.getBaseUrl().replace(/\/api\/?$/, '') : '';
+      // 适配新接口字段
+      const formattedProducts = (Array.isArray(list) ? list : []).map(p => {
+        const createdAtFmt = utils.formatDate(p.createdAt);
+        const plantingDate = utils.formatDate(p.plantingTime);
+        const harvestDate = utils.formatDate(p.harvestTime);
+        const producerName = p.producer ? (p.producer.name || p.producer.account || '') : '';
+        const isQualified = Array.isArray(p.safetyInspections)
+          ? p.safetyInspections.some(si => si && si.manualResult === '合格')
+          : false;
+        const imageUrlAbs = p.imageUrl ? `${originBase}${p.imageUrl}` : (p.imageUrl || '');
+        return {
+          ...p,
+          // 兼容旧字段命名
+          name: p.vegetableName,
+          variety: p.vegetableVariety,
+          created_at: createdAtFmt,
+          plantingDate,
+          harvestDate,
+          producerName,
+          isQualified,
+          imageUrl: imageUrlAbs,
+        };
+      });
 
       this.setData({
         products: formattedProducts,
@@ -79,6 +99,8 @@ Page({
         title: '加载失败',
         icon: 'none'
       });
+    } finally {
+      this._loadingLock = false;
     }
   },
 
@@ -122,10 +144,18 @@ Page({
     // 根据搜索关键词过滤
     if (searchKeyword) {
       const keyword = searchKeyword.toLowerCase();
-      filteredProducts = filteredProducts.filter(product => 
-        product.name.toLowerCase().includes(keyword) ||
-        product.batch.batchCode.toLowerCase().includes(keyword)
-      );
+      filteredProducts = filteredProducts.filter(product => {
+        const name = (product.name || '').toLowerCase();
+        const variety = (product.variety || '').toLowerCase();
+        const origin = (product.origin || '').toLowerCase();
+        const producer = (product.producerName || '').toLowerCase();
+        return (
+          name.includes(keyword) ||
+          variety.includes(keyword) ||
+          origin.includes(keyword) ||
+          producer.includes(keyword)
+        );
+      });
     }
     
     this.setData({
@@ -144,9 +174,9 @@ Page({
     let sortedProducts = [...this.data.filteredProducts];
     
     if (sort === 'time') {
-      sortedProducts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      sortedProducts.sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
     } else if (sort === 'name') {
-      sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
+      sortedProducts.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
     
     this.setData({
@@ -165,7 +195,8 @@ Page({
       return;
     }
     wx.navigateTo({
-      url: `/pages/detail/detail?id=${id}`
+      // 首页作为公共浏览入口，统一以只读模式进入
+      url: `/pages/detail/detail?id=${id}&view=readonly`
     });
   },
 
@@ -208,62 +239,62 @@ Page({
     }
   },
 
-  // 扫码溯源
+  // 扫码溯源（优先解析产品批次ID，其次以 code 查询，再退回提示）
   async handleScan() {
     try {
-      const result = await wx.scanCode({
-        scanType: ['qrCode']
-      });
+      const res = await wx.scanCode({ scanType: ['qrCode'] });
+      const raw = res?.result || '';
 
-      wx.showLoading({
-        title: '解析中...'
-      });
-
-      try {
-        // 尝试解析二维码数据
-        const scanResult = await qrcodeAPI.decodeQrcodeData({
-          qrcodeData: result.result
-        });
-
-        this.setData({
-          showScanResultModal: true,
-          scanResult: scanResult
-        });
-
-        wx.hideLoading();
-
-      } catch (error) {
-        wx.hideLoading();
-        
-        // 如果解析失败，尝试直接查询
-        try {
-          const qrcodeId = result.result.split('/').pop();
-          const traceInfo = await qrcodeAPI.getTraceInfo(qrcodeId);
-          
-          this.setData({
-            showScanResultModal: true,
-            scanResult: {
-              success: true,
-              data: traceInfo
-            }
-          });
-        } catch (queryError) {
-          this.setData({
-            showScanResultModal: true,
-            scanResult: {
-              success: false,
-              message: '无法解析二维码数据'
-            }
-          });
+      // 1) 尝试直接从 URL 中提取产品批次ID：/product-batches/{id}
+      const idMatch = raw.match(/\/product-batches\/(\d+)/);
+      if (idMatch && idMatch[1]) {
+        const id = Number(idMatch[1]);
+        if (!isNaN(id)) {
+          // 扫码进入详情：以只读模式展示
+          wx.navigateTo({ url: `/pages/detail/detail?id=${id}&view=readonly` });
+          return;
         }
       }
 
+      // 2) 提取 code 参数或将整段内容视为 code，走后端扫描详情接口
+      const extractCode = (str) => {
+        try {
+          // 兼容完整 URL
+          const url = new URL(str);
+          const codeParam = url.searchParams.get('code');
+          if (codeParam) return codeParam;
+          // 兼容路径段最后一节当作 code（若非数字ID）
+          const last = url.pathname.split('/').filter(Boolean).pop();
+          if (last && !/^\d+$/.test(last)) return last;
+        } catch (_) {
+          // 非 URL，直接返回原始字符串
+        }
+        return str;
+      };
+
+      const code = extractCode(raw);
+      if (code && typeof code === 'string' && code.length > 0) {
+        wx.showLoading({ title: '查询中...' });
+        try {
+          const detail = await qrcodeAPI.getTraceInfo(code);
+          // detail 期望返回产品批次详情，取 id 跳转详情页
+          const id = detail?.id || detail?.data?.id;
+          if (id) {
+            wx.hideLoading();
+            // 扫码进入详情：以只读模式展示
+            wx.navigateTo({ url: `/pages/detail/detail?id=${id}&view=readonly` });
+            return;
+          }
+        } catch (e) {
+          // 继续走失败提示
+        }
+        wx.hideLoading();
+      }
+
+      wx.showToast({ title: '无法解析二维码', icon: 'none' });
     } catch (error) {
       console.error('扫码失败:', error);
-      wx.showToast({
-        title: '扫码失败',
-        icon: 'none'
-      });
+      wx.showToast({ title: '扫码失败', icon: 'none' });
     }
   },
 

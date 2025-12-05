@@ -1,4 +1,4 @@
-import { adminAPI } from '../../../utils/api.js';
+import { adminAPI, productAPI, utils } from '../../../utils/api.js';
 
 Page({
   data: {
@@ -44,9 +44,17 @@ Page({
   // 加载农户产品
   async loadFarmerProducts(farmerId) {
     try {
-      const products = await adminAPI.getFarmerProducts(farmerId);
+      const batches = await productAPI.getProductsWithAuth();
+      const list = Array.isArray(batches) ? batches : [];
+      const filtered = list.filter(p => p.producerId === farmerId).map(p => ({
+        id: p.id,
+        vegetableName: p.vegetableName,
+        origin: p.origin,
+        plantingTime: utils.formatDate(p.plantingTime),
+        harvestTime: utils.formatDate(p.harvestTime),
+      }));
       this.setData({
-        farmerProducts: products
+        farmerProducts: filtered
       });
     } catch (error) {
       console.error('加载农户产品失败:', error);
@@ -63,7 +71,7 @@ Page({
     
     wx.showModal({
       title: '农户详情',
-      content: `用户名: ${farmer.username}\n联系电话: ${farmer.tel}\n所属企业: ${farmer.enterprise}\n产品数量: ${farmer.productCount}\n注册时间: ${farmer.createdAt}`,
+      content: `账号: ${farmer.account || '-'}\n姓名: ${farmer.name || '-'}\n联系电话: ${farmer.phone || '-'}\n注册时间: ${farmer.created_at || '-'}`,
       showCancel: false
     });
   },
@@ -74,7 +82,7 @@ Page({
     
     wx.showModal({
       title: '产品详情',
-      content: `产品名称: ${product.name}\n产地: ${product.origin}\n种植日期: ${product.plantingDate}\n收获日期: ${product.harvestDate}\n检测类型: ${product.testType}\n检测日期: ${product.testDate}\n是否合格: ${product.isQualified ? '是' : '否'}`,
+      content: `蔬菜名称: ${product.vegetableName}\n产地: ${product.origin}\n种植日期: ${product.plantingTime}\n收获日期: ${product.harvestTime}`,
       showCancel: false
     });
   },

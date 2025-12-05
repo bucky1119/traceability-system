@@ -1,16 +1,16 @@
 <!--index.wxml-->
 <view class="container">
   <!-- 模拟数据测试状态 -->
-  <view class="mock-status" wx:if="{{mockDataStatus}}">
+  <!-- <view class="mock-status" wx:if="{{mockDataStatus}}">
     <text class="mock-text">{{mockDataStatus}}</text>
-  </view>
+  </view> -->
 
   <!-- 顶部搜索栏 -->
   <view class="search-header">
     <view class="search-bar">
       <input 
         class="search-input" 
-        placeholder="搜索产品名称或批次编号" 
+        placeholder="搜索产品名称、品种或产地" 
         value="{{searchKeyword}}"
         bindinput="onSearchInput"
       />
@@ -19,7 +19,6 @@
     
     <view class="scan-section">
       <button class="scan-btn" bindtap="handleScan">
-        <text class="scan-icon">📱</text>
         <text class="scan-text">扫码溯源</text>
       </button>
     </view>
@@ -79,7 +78,8 @@
       
       <view class="product-content">
         <text class="product-name">{{item.name}}</text>
-        <text class="product-batch">批次: {{item.batch.batchCode}}</text>
+        <text class="product-batch">品种: {{item.variety || '—'}}
+        </text>
         <text class="product-origin" wx:if="{{item.origin}}">产地: {{item.origin}}</text>
         <text class="product-producer">生产者: {{item.producerName}}</text>
         <text class="product-date">录入时间: {{item.created_at}}</text>

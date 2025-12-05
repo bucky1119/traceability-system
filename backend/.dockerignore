@@ -8,7 +8,6 @@ Dockerfile*
 coverage
 .dist
 /dist
-/uploads
 .env
 .env.local
 *.swp

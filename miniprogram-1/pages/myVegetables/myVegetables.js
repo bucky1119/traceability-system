@@ -1,4 +1,5 @@
 import { productAPI, qrcodeAPI, utils } from '../../utils/api.js';
+const config = require('../../config.js');
 
 Page({
   data: {
@@ -6,6 +7,8 @@ Page({
     products: [],
     filteredProducts: [], // 添加筛选后的产品列表
     searchKeyword: '',
+    // 当前登录用户角色（admin/producer），用于控制数据范围与展示
+    userRole: 'producer',
     filterIndex: 0,
     filterOptions: [
       { label: '全部产品', value: 'all' },
@@ -43,9 +46,16 @@ Page({
     console.log('存储的userInfo:', userInfo);
     
     if (token && userInfo) {
+      // 记录角色，管理员查看全量产品
+      this.setData({ userRole: userInfo.role || 'producer' });
       console.log('用户已登录，开始加载数据');
-      this.loadProducts();
-      this.loadStats();
+      // 避免进入时重复触发加载
+      if (this._initialLoaded) {
+        console.log('已完成首轮加载，跳过');
+      } else {
+        this._initialLoaded = true;
+        this.loadProducts();
+      }
     } else {
       console.log('用户未登录，跳转到登录页面');
       wx.navigateTo({
@@ -59,6 +69,8 @@ Page({
     if (this.data.searchTimer) {
       clearTimeout(this.data.searchTimer);
     }
+    // 页面卸载时重置首轮加载标志
+    this._initialLoaded = false;
   },
 
   // 检查登录状态
@@ -83,26 +95,52 @@ Page({
     }
     
     console.log('用户已登录:', userInfo);
+    // 同步角色
+    this.setData({ userRole: userInfo.role || 'producer' });
   },
 
   // 加载产品列表
   async loadProducts() {
+    if (this._loadingLock) {
+      console.log('loadProducts 已在进行中，跳过并发调用');
+      return;
+    }
+    this._loadingLock = true;
     this.setData({ loading: true });
 
     try {
       console.log('开始加载产品数据...');
-      const products = await productAPI.getMyProducts();
-      console.log('API返回的产品数据:', products);
+      // 管理员查看全部产品；生产者仅查看“我的”产品
+      const isAdmin = this.data.userRole === 'admin';
+      const list = isAdmin
+        ? await productAPI.getProductsWithAuth()
+        : await productAPI.getMyProducts();
+      console.log('API返回的产品数据:', list);
       
-      // 格式化日期，并兜底batch字段
-      const formattedProducts = products.map(product => ({
-        ...product,
-        created_at: utils.formatDate(product.created_at),
-        plantingDate: utils.formatDate(product.plantingDate),
-        harvestDate: utils.formatDate(product.harvestDate),
-        testDate: utils.formatDate(product.testDate),
-        batch: product.batch && typeof product.batch === 'object' ? product.batch : { batchCode: '', createTime: '', notes: '' }
-      }));
+      // 适配新接口字段
+      const apiBase = config.getBaseUrl();
+      const originBase = apiBase.replace(/\/api\/?$/, '');
+      const formattedProducts = (Array.isArray(list) ? list : []).map(p => {
+        const createdAtFmt = utils.formatDate(p.createdAt);
+        const plantingDate = utils.formatDate(p.plantingTime);
+        const harvestDate = utils.formatDate(p.harvestTime);
+        const producerName = p.producer ? (p.producer.name || p.producer.account || '') : '';
+        const isQualified = Array.isArray(p.safetyInspections)
+          ? p.safetyInspections.some(si => si && si.manualResult === '合格')
+          : false;
+        const fullImageUrl = p.imageUrl ? `${originBase}${p.imageUrl}` : '';
+        return {
+          ...p,
+          name: p.vegetableName,
+          variety: p.vegetableVariety,
+          created_at: createdAtFmt,
+          plantingDate,
+          harvestDate,
+          producerName,
+          isQualified,
+          imageUrl: fullImageUrl,
+        };
+      });
 
       console.log('格式化后的产品数据:', formattedProducts);
 
@@ -110,6 +148,15 @@ Page({
         products: formattedProducts,
         filteredProducts: formattedProducts, // 初始化筛选后的产品列表
         loading: false
+      });
+
+      // 统计数据避免重复请求，由当前列表计算
+      const totalProducts = formattedProducts.length;
+      const totalQrcodes = formattedProducts.reduce((sum, p) => sum + ((p.qrCodes && p.qrCodes.length) || 0), 0);
+      // 暂无扫码次数数据，设为 0
+      const totalScans = 0;
+      this.setData({
+        stats: { totalProducts, totalQrcodes, totalScans }
       });
 
       // 应用当前的筛选条件
@@ -123,29 +170,11 @@ Page({
         icon: 'none'
       });
     }
+    this._loadingLock = false;
   },
 
   // 加载统计数据
-  async loadStats() {
-    try {
-      const [products, qrcodes] = await Promise.all([
-        productAPI.getMyProducts(),
-        qrcodeAPI.getQrcodes()
-      ]);
-      
-      const totalScans = qrcodes.reduce((sum, qrcode) => sum + qrcode.scanCount, 0);
-      
-      this.setData({
-        stats: {
-          totalProducts: products.length,
-          totalQrcodes: qrcodes.length,
-          totalScans: totalScans
-        }
-      });
-    } catch (error) {
-      console.error('加载统计数据失败:', error);
-    }
-  },
+  // 移除独立的 loadStats，统计在 loadProducts 中计算，避免重复请求
 
   // 搜索输入
   onSearchInput(e) {
@@ -239,10 +268,18 @@ Page({
     // 根据搜索关键词过滤
     if (searchKeyword && searchKeyword.trim()) {
       const keyword = searchKeyword.toLowerCase().trim();
-      filteredProducts = filteredProducts.filter(product => 
-        product.name.toLowerCase().includes(keyword) ||
-        (product.batch && product.batch.batchCode && product.batch.batchCode.toLowerCase().includes(keyword))
-      );
+      filteredProducts = filteredProducts.filter(product => {
+        const name = (product.name || '').toLowerCase();
+        const variety = (product.variety || '').toLowerCase();
+        const origin = (product.origin || '').toLowerCase();
+        const farmer = (product.producerName || '').toLowerCase();
+        return (
+          name.includes(keyword) ||
+          variety.includes(keyword) ||
+          origin.includes(keyword) ||
+          farmer.includes(keyword)
+        );
+      });
     }
     
     console.log('筛选后的产品数量:', filteredProducts.length);
@@ -278,6 +315,8 @@ Page({
   // 生成二维码
   async handleGenerateQrcode(e) {
     const { product } = e.currentTarget.dataset;
+    if (this.data._genLock) return; // 防重复
+    this.setData({ _genLock: true });
     
     wx.showLoading({
       title: '生成中...'
@@ -286,24 +325,22 @@ Page({
     try {
       console.log('开始生成二维码，产品信息:', product);
       
-      const qrcode = await qrcodeAPI.createQrcode({
-        productId: product.id,
-        batchId: product.batch.id
-      });
+      // 新接口：传入批次ID（即产品ID）
+  const resp = await qrcodeAPI.createQrcode(product.id);
+  const code = resp?.qrCodeEntity?.codeData || resp?.code || resp?.data?.code;
 
-      console.log('二维码创建成功:', qrcode);
+  // 创建成功
 
       // 获取二维码图片信息
-      const imageInfo = await qrcodeAPI.getQrcodeImageInfo(qrcode.qrcodeId);
+  const imageInfo = qrcodeAPI.getQrcodeImageInfo(code);
       
       console.log('图片信息获取成功:', imageInfo);
 
       const currentQrcode = {
-        ...qrcode,
-        ...imageInfo,
+        code,
+        imageUrl: imageInfo.imageUrl,
         productName: product.name,
-        batchCode: product.batch.batchCode,
-        generateTime: utils.formatDateTime(qrcode.generateTime)
+        generateTime: utils.formatDateTime(new Date())
       };
 
       console.log('设置二维码数据:', currentQrcode);
@@ -314,14 +351,46 @@ Page({
       });
 
       wx.hideLoading();
+      this.setData({ _genLock: false });
 
     } catch (error) {
       wx.hideLoading();
+      this.setData({ _genLock: false });
       console.error('生成二维码失败:', error);
       wx.showToast({
         title: '生成二维码失败',
         icon: 'none'
       });
+    }
+  },
+
+  // 保存已有二维码（若已生成）
+  async handleSaveExistingQrcode(e) {
+    const { product } = e.currentTarget.dataset;
+    const list = product && Array.isArray(product.qrCodes) ? product.qrCodes : [];
+    if (!list.length) {
+      wx.showToast({ title: '暂无二维码', icon: 'none' });
+      return;
+    }
+    try {
+      // 取最新一条（或首条）
+      const last = list[list.length - 1] || list[0];
+      const code = last.codeData || last.code || last.data?.code;
+      if (!code) {
+        wx.showToast({ title: '二维码无效', icon: 'none' });
+        return;
+      }
+      const imageInfo = qrcodeAPI.getQrcodeImageInfo(code);
+      const currentQrcode = {
+        code,
+        imageUrl: imageInfo.imageUrl,
+        productName: product.name || product.vegetableName || '',
+        generateTime: utils.formatDateTime(last.createdAt || new Date())
+      };
+      this.setData({ showQrcodeModal: true, currentQrcode });
+    } catch (err) {
+      console.error('读取二维码失败:', err);
+      wx.showToast({ title: '读取失败', icon: 'none' });
     }
   },
 
@@ -384,11 +453,11 @@ Page({
         title: '下载中...'
       });
 
-      const tempFilePath = await qrcodeAPI.downloadQrcodeImage(this.data.currentQrcode.qrcodeId);
+  const tempFilePath = await qrcodeAPI.downloadQrcodeImage(this.data.currentQrcode.code);
       
       // 保存到本地文件
       const fs = wx.getFileSystemManager();
-      const filePath = `${wx.env.USER_DATA_PATH}/qrcode_${this.data.currentQrcode.qrcodeId}.png`;
+  const filePath = `${wx.env.USER_DATA_PATH}/qrcode_${this.data.currentQrcode.code}.png`;
       
       // 复制临时文件到本地
       fs.copyFileSync(tempFilePath, filePath);
@@ -419,7 +488,7 @@ Page({
         title: '保存中...'
       });
 
-      const tempFilePath = await qrcodeAPI.downloadQrcodeImage(this.data.currentQrcode.qrcodeId);
+  const tempFilePath = await qrcodeAPI.downloadQrcodeImage(this.data.currentQrcode.code);
       
       // 保存到相册
       await wx.saveImageToPhotosAlbum({
@@ -454,8 +523,9 @@ Page({
 
   // 跳转到录入页面
   goToInput() {
-    wx.navigateTo({
+    wx.switchTab({
       url: '/pages/input/input'
     });
   }
+
 });

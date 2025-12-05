@@ -77,17 +77,42 @@ export const authAPI = {
     if (USE_MOCK_DATA) {
       return await MockAPI.login(data);
     }
-    return request('/auth/login', {
+    // 后端已改为生产者账号登录：/auth/producer/login，字段为 { account, password }
+    const payload = {
+      account: data.account || data.username, // 兼容旧表单的 username 字段
+      password: data.password,
+    };
+    return request('/auth/producer/login', {
       method: 'POST',
-      data
+      data: payload
     });
   },
   
-  // 用户注册
-  register: (data) => request('/auth/register', {
-    method: 'POST',
-    data
-  }),
+  // 管理员登录
+  adminLogin: async (data) => {
+    if (USE_MOCK_DATA) {
+      return await MockAPI.login(data);
+    }
+    const payload = {
+      username: data.username,
+      password: data.password,
+    };
+    return request('/auth/admin/login', {
+      method: 'POST',
+      data: payload,
+    });
+  },
+  
+  // 生产者注册（/producers/register）
+  register: (data) => {
+    const payload = {
+      account: data.account || data.username,
+      password: data.password,
+      name: data.name || data.username,
+      registrationCode: data.registrationCode,
+    };
+    return request('/producers/register', { method: 'POST', data: payload });
+  },
   
   // 获取用户信息
   getUserInfo: async () => {
@@ -105,7 +130,8 @@ export const productAPI = {
     if (USE_MOCK_DATA) {
       return await MockAPI.getProducts(params);
     }
-    return request('/products/public', {
+    // 统一使用 /product-batches
+    return request('/product-batches', {
       data: params
     });
   },
@@ -115,7 +141,7 @@ export const productAPI = {
     if (USE_MOCK_DATA) {
       return await MockAPI.getProducts(params);
     }
-    return request('/products', {
+    return request('/product-batches', {
       data: params
     });
   },
@@ -125,14 +151,46 @@ export const productAPI = {
     if (USE_MOCK_DATA) {
       return await MockAPI.createProduct(data);
     }
-    return request('/products', {
+    return request('/product-batches', {
       method: 'POST',
       data
     });
   },
   
+  // 创建产品（带图片，字段名 image）
+  createProductWithImage: ({ data, filePath }) => new Promise((resolve, reject) => {
+    if (USE_MOCK_DATA) {
+      MockAPI.createProduct(data).then(resolve).catch(reject);
+      return;
+    }
+    const token = wx.getStorageSync('token');
+    // 仅上传有值的字段，强制转为字符串，避免 [object Undefined]
+    const formData = {};
+    const isISODateTime = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(s);
+    Object.keys(data || {}).forEach((k) => {
+      const v = data[k];
+      if (v !== undefined && v !== null && v !== '') {
+        const s = String(v);
+        // ISO 日期保持原样（避免被 % 编码后后端校验失败），其他字段做 URI 编码
+        formData[k] = isISODateTime(s) ? s : encodeURIComponent(s);
+      }
+    });
+    wx.uploadFile({
+      url: `${config.getBaseUrl()}/product-batches`,
+      filePath,
+      name: 'image',
+      formData,
+      header: { Authorization: token ? `Bearer ${token}` : '' },
+      success: (res) => {
+        try { resolve(JSON.parse(res.data)); } catch { resolve(res.data); }
+      },
+      fail: reject,
+    });
+  }),
+  
   // 管理员录入产品
-  createProductByAdmin: (data) => request('/products/admin', {
+  // 管理员录入产品（需在 data 中提供 producerId）
+  createProductByAdmin: (data) => request('/product-batches', {
     method: 'POST',
     data
   }),
@@ -142,17 +200,34 @@ export const productAPI = {
     if (USE_MOCK_DATA) {
       return await MockAPI.getProductDetail(id);
     }
-    return request(`/products/${id}`);
+    return request(`/product-batches/${id}`);
   },
   
   // 更新产品信息
-  updateProduct: (id, data) => request(`/products/${id}`, {
+  updateProduct: (id, data) => request(`/product-batches/${id}`, {
     method: 'PATCH',
     data
   }),
+
+  // 更新产品图片（POST /product-batches/:id/image，字段名 image）
+  updateProductImage: ({ id, filePath }) => new Promise((resolve, reject) => {
+    if (USE_MOCK_DATA) {
+      resolve({ success: true });
+      return;
+    }
+    const token = wx.getStorageSync('token');
+    wx.uploadFile({
+      url: `${config.getBaseUrl()}/product-batches/${id}/image`,
+      filePath,
+      name: 'image',
+      header: { Authorization: token ? `Bearer ${token}` : '' },
+      success: (res) => { try { resolve(JSON.parse(res.data)); } catch { resolve(res.data); } },
+      fail: reject,
+    });
+  }),
   
   // 删除产品
-  deleteProduct: (id) => request(`/products/${id}`, {
+  deleteProduct: (id) => request(`/product-batches/${id}`, {
     method: 'DELETE'
   }),
   
@@ -161,19 +236,20 @@ export const productAPI = {
     if (USE_MOCK_DATA) {
       return await MockAPI.getMyProducts();
     }
-    return request('/products/my');
+    // 使用受保护的 "我的产品" 列表，仅返回当前登录生产者的产品
+    return request('/product-batches/my');
   },
   
   // 导出检测结果
-  exportTestResults: (farmerId) => request(`/products/export${farmerId ? `?farmerId=${farmerId}` : ''}`)
+  // 导出产品为 CSV（管理员可用 producerId 过滤）
+  exportTestResults: (producerId) => request(`/product-batches/export${producerId ? `?producerId=${producerId}` : ''}`)
 };
 
 // 二维码相关API
 export const qrcodeAPI = {
-  // 创建二维码
-  createQrcode: (data) => request('/qrcodes', {
-    method: 'POST',
-    data
+  // 为批次生成二维码（需要传入 batchId）
+  createQrcode: (batchId) => request(`/qr-codes/generate/${batchId}`, {
+    method: 'POST'
   }),
   
   // 获取二维码列表
@@ -181,16 +257,19 @@ export const qrcodeAPI = {
     if (USE_MOCK_DATA) {
       return await MockAPI.getQrcodes(params);
     }
-    return request('/qrcodes', {
-      data: params
-    });
+    // 后端暂无列表接口，先返回空数组避免 404
+    return [];
   },
   
   // 获取二维码详情
-  getQrcodeDetail: (id) => request(`/qrcodes/${id}`),
+  // 通过 code 查询批次详情
+  getQrcodeDetail: (code) => request(`/qr-codes/scan/detail`, { data: { code } }),
   
   // 获取二维码图片信息
-  getQrcodeImageInfo: (qrcodeId) => request(`/qrcodes/image-info/${qrcodeId}`),
+  // 直接返回图片 URL（无需鉴权）
+  getQrcodeImageInfo: (code) => ({
+    imageUrl: `${config.getBaseUrl()}/qr-codes/image/${code}`
+  }),
   
   // // 下载二维码图片
   // downloadQrcodeImage: (qrcodeId) => request(`/qrcodes/download/${qrcodeId}`),
@@ -198,11 +277,11 @@ export const qrcodeAPI = {
   // // 预览二维码图片
   // previewQrcodeImage: (qrcodeId) => request(`/qrcodes/preview/${qrcodeId}`),
   // 下载二维码图片
-  downloadQrcodeImage: (qrcodeId) => {
+  downloadQrcodeImage: (code) => {
     return new Promise((resolve, reject) => {
       const token = wx.getStorageSync('token');
       wx.downloadFile({
-        url: `${config.getBaseUrl()}/qrcodes/download/${qrcodeId}`,
+        url: `${config.getBaseUrl()}/qr-codes/download/${code}`,
         header: {
           Authorization: token ? `Bearer ${token}` : ''
         },
@@ -223,28 +302,25 @@ export const qrcodeAPI = {
   },
 
   // 预览二维码图片
-  previewQrcodeImage: (qrcodeId) => {
-    const token = wx.getStorageSync('token');
-    return `${config.getBaseUrl()}/qrcodes/preview/${qrcodeId}?token=${token}`;
+  previewQrcodeImage: (code) => {
+    return `${config.getBaseUrl()}/qr-codes/image/${code}`;
   },
   
   // 查询溯源信息
-  getTraceInfo: async (qrcodeId) => {
+  getTraceInfo: async (code) => {
     if (USE_MOCK_DATA) {
-      return await MockAPI.getTraceInfo(qrcodeId);
+      return await MockAPI.getTraceInfo(code);
     }
-    return request(`/qrcodes/trace/${qrcodeId}`);
+    return request(`/qr-codes/scan/detail?code=${encodeURIComponent(code)}`);
   },
   
   // 解析二维码数据
   decodeQrcodeData: async (data) => {
+    // 保留占位；当前后端未提供该接口
     if (USE_MOCK_DATA) {
       return await MockAPI.decodeQrcodeData(data);
     }
-    return request('/qrcodes/decode', {
-      method: 'POST',
-      data
-    });
+    return { success: true, data: {} };
   }
 };
 
@@ -255,71 +331,30 @@ export const batchAPI = {
     if (USE_MOCK_DATA) {
       return await MockAPI.getBatches(params);
     }
-    return request('/batches', {
+    return request('/product-batches', {
       data: params
     });
   },
   
   // 创建批次
-  createBatch: (data) => request('/batches', {
+  createBatch: (data) => request('/product-batches', {
     method: 'POST',
     data
   }),
   
   // 获取批次详情
-  getBatchDetail: (id) => request(`/batches/${id}`),
+  getBatchDetail: (id) => request(`/product-batches/${id}`),
   
   // 更新批次信息
-  updateBatch: (id, data) => request(`/batches/${id}`, {
+  updateBatch: (id, data) => request(`/product-batches/${id}`, {
     method: 'PATCH',
     data
   })
 };
 
-// 企业相关API
-export const enterpriseAPI = {
-  // 获取企业列表（公共接口，无需登录）
-  getEnterprises: async () => {
-    if (USE_MOCK_DATA) {
-      return await MockAPI.getEnterprises();
-    }
-    return request('/enterprises/public');
-  },
-  
-  // 获取企业列表（需要登录）
-  getEnterprisesWithAuth: async () => {
-    if (USE_MOCK_DATA) {
-      return await MockAPI.getEnterprises();
-    }
-    return request('/enterprises');
-  },
-  
-  // 创建企业
-  createEnterprise: (data) => request('/enterprises', {
-    method: 'POST',
-    data
-  }),
-  
-  // 获取企业详情
-  getEnterpriseDetail: (id) => request(`/enterprises/${id}`),
-  
-  // 更新企业信息
-  updateEnterprise: (id, data) => request(`/enterprises/${id}`, {
-    method: 'PATCH',
-    data
-  }),
-  
-  // 删除企业
-  deleteEnterprise: (id) => request(`/enterprises/${id}`, {
-    method: 'DELETE'
-  })
-};
 
 // 角色相关API
-export const roleAPI = {
-  // 获取角色列表
-  getRoles: () => request('/roles')
-};
+// 已移除 roleAPI（后端无 /roles 接口）
 
 // 管理员相关API
 export const adminAPI = {
@@ -328,52 +363,147 @@ export const adminAPI = {
     if (USE_MOCK_DATA) {
       return await MockAPI.getFarmers();
     }
-    return request('/admin/farmers');
+    return request('/producers');
   },
+  // 创建管理员
+  createAdmin: (data) => request('/admins', { method: 'POST', data }),
   
   // 为农户录入产品
-  createFarmerProduct: (data) => request('/admin/products', {
+  createFarmerProduct: (data) => request('/product-batches', {
     method: 'POST',
     data
   }),
   
   // 导出产品信息
-  exportProducts: (params = {}) => request(`/admin/products/export${params.farmerId ? `?farmerId=${params.farmerId}` : ''}`),
-  
-  // 获取系统统计
-  getSystemStats: async () => {
+  exportProducts: (params = {}) => request(`/product-batches/export${params.producerId ? `?producerId=${params.producerId}` : ''}`),
+
+  // 下载产品导出（CSV），返回临时文件路径
+  downloadProductsCsv: ({ producerId } = {}) => new Promise((resolve, reject) => {
+    const token = wx.getStorageSync('token');
+    const url = `${config.getBaseUrl()}/product-batches/export${producerId ? `?producerId=${producerId}` : ''}`;
+    wx.downloadFile({
+      url,
+      header: { Authorization: token ? `Bearer ${token}` : '' },
+      success: (res) => {
+        if (res.statusCode === 200) {
+          resolve(res.tempFilePath);
+        } else {
+          reject(new Error('下载失败'));
+        }
+      },
+      fail: reject,
+    });
+  }),
+
+  // 设置注册码
+  setRegistrationCode: ({ code }) => request('/system-config/registration-code', {
+    method: 'PUT',
+    data: { code }
+  }),
+};
+
+// 统计 API（管理员）
+export const statsAPI = {
+  getDashboard: () => request('/stats/dashboard'),
+};
+
+// 安检相关API
+export const safetyAPI = {
+  // 创建安检（JSON，不带图片）
+  create: (data) => request('/safety-inspections', { method: 'POST', data }),
+  // 创建安检（带图片，字段名 resultImage）
+  createWithImage: ({ data, filePath }) => new Promise((resolve, reject) => {
     if (USE_MOCK_DATA) {
-      return await MockAPI.getSystemStats();
+      MockAPI.createSafety && MockAPI.createSafety(data).then(resolve).catch(reject);
+      return;
     }
-    return request('/admin/stats');
+    const token = wx.getStorageSync('token');
+    const formData = {};
+    const isISODateTime = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(s);
+    Object.keys(data || {}).forEach((k) => {
+      const v = data[k];
+      if (v !== undefined && v !== null && v !== '') {
+        const s = String(v);
+        formData[k] = isISODateTime(s) ? s : encodeURIComponent(s);
+      }
+    });
+    wx.uploadFile({
+      url: `${config.getBaseUrl()}/safety-inspections`,
+      filePath,
+      name: 'resultImage',
+      formData,
+      header: { Authorization: token ? `Bearer ${token}` : '' },
+      success: (res) => {
+        try { resolve(JSON.parse(res.data)); } catch { resolve(res.data); }
+      },
+      fail: reject,
+    });
+  }),
+  // 更新安检（JSON，不带图片）
+  update: (id, data) => {
+    // 防御性：移除不应出现在更新请求中的字段
+    const { batchId, creatorId, resultImageUrl, ...rest } = data || {};
+    return request(`/safety-inspections/${id}`, { method: 'PATCH', data: rest });
   },
-  
-  // 获取产品统计
-  getProductStats: async () => {
+  // 删除安检
+  remove: (id) => request(`/safety-inspections/${id}`, { method: 'DELETE' }),
+  // 按批次查询
+  listByBatch: (batchId) => request(`/safety-inspections/batch/${batchId}`),
+  // 上传安检图片
+  uploadResultImage: ({ id, filePath }) => new Promise((resolve, reject) => {
+    const token = wx.getStorageSync('token');
+    wx.uploadFile({
+      url: `${config.getBaseUrl()}/safety-inspections/${id}`,
+      filePath,
+      name: 'resultImage',
+      header: { Authorization: token ? `Bearer ${token}` : '' },
+      success: (res) => {
+        try { resolve(JSON.parse(res.data)); } catch { resolve(res.data); }
+      },
+      fail: reject,
+    });
+  }),
+
+  // 更新已有安检图片（POST /safety-inspections/:id/image）
+  updateImage: ({ id, filePath, data = {} }) => new Promise((resolve, reject) => {
     if (USE_MOCK_DATA) {
-      return await MockAPI.getProductStats();
+      resolve({ success: true });
+      return;
     }
-    return request('/admin/products/stats');
-  },
-  
-  // 获取企业统计
-  getEnterpriseStats: async () => {
+    const token = wx.getStorageSync('token');
+    wx.uploadFile({
+      url: `${config.getBaseUrl()}/safety-inspections/${id}/image`,
+      filePath,
+      name: 'resultImage',
+      formData: data,
+      header: { Authorization: token ? `Bearer ${token}` : '' },
+      success: (res) => { try { resolve(JSON.parse(res.data)); } catch { resolve(res.data); } },
+      fail: reject,
+    });
+  }),
+};
+
+// 生产者个人信息 API
+export const producerAPI = {
+  // 获取当前登录生产者信息（基于 token 中的 sub）
+  getMe: async () => {
     if (USE_MOCK_DATA) {
-      return await MockAPI.getEnterpriseStats();
+      return { id: 1, name: '测试用户', phone: '13800000000' };
     }
-    return request('/admin/enterprises');
+    const token = wx.getStorageSync('token');
+    const payload = token ? utils.decodeJwt(token) : null;
+    const id = payload?.sub;
+    if (!id) throw new Error('未获取到用户ID');
+    return request(`/producers/${id}`);
   },
-  
-  // 获取二维码统计
-  getQrcodeStats: async () => {
+
+  // 更新当前登录生产者信息（姓名、联系方式）
+  updateMe: async (data) => {
     if (USE_MOCK_DATA) {
-      return await MockAPI.getQrcodeStats();
+      return { success: true };
     }
-    return request('/admin/qrcodes/stats');
-  },
-  
-  // 获取指定农户的产品
-  getFarmerProducts: (farmerId) => request(`/admin/farmers/${farmerId}/products`)
+    return request('/producers/me', { method: 'PATCH', data });
+  }
 };
 
 // 工具方法
@@ -411,6 +541,43 @@ export const utils = {
   validateEmail: (email) => {
     const reg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return reg.test(email);
+  },
+
+  // 解析 JWT（不验证，仅解码 payload）
+  decodeJwt: (token) => {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      let payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (payload.length % 4) payload += '=';
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+      let output = '';
+      let buffer = 0;
+      let bc = 0;
+      for (let i = 0; i < payload.length; i++) {
+        const c = chars.indexOf(payload.charAt(i));
+        if (c < 0) continue;
+        buffer = (buffer << 6) | c;
+        bc += 6;
+        if (bc >= 8) {
+          bc -= 8;
+          output += String.fromCharCode((buffer >>> bc) & 0xff);
+        }
+      }
+      let jsonStr;
+      try {
+        // 尝试按 UTF-8 解码
+        // 使用 escape 以兼容性处理（虽已废弃，但在小程序运行时可用）
+        // eslint-disable-next-line deprecate/deprecate
+        jsonStr = decodeURIComponent(escape(output));
+      } catch (_) {
+        jsonStr = output;
+      }
+      return JSON.parse(jsonStr);
+    } catch (e) {
+      console.warn('JWT 解码失败:', e);
+      return null;
+    }
   }
 };
 
@@ -419,8 +586,9 @@ export default {
   authAPI,
   productAPI,
   qrcodeAPI,
+  safetyAPI,
   batchAPI,
-  enterpriseAPI,
-  roleAPI,
+  producerAPI,
+  statsAPI,
   utils
 }; 

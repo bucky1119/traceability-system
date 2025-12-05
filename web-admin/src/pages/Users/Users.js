@@ -25,6 +25,7 @@ import {
   SearchOutlined
 } from '@ant-design/icons';
 import './Users.css';
+import { producerAPI } from '../../services/api';
 
 const { Option } = Select;
 
@@ -43,42 +44,18 @@ const Users = () => {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      // 模拟API调用
-      const mockUsers = [
-        {
-          id: 1,
-          username: 'admin',
-          email: 'admin@example.com',
-          role: 'admin',
-          status: 'active',
-          enterprise: '系统管理',
-          createdAt: '2024-01-01 10:00:00',
-          lastLogin: '2024-01-15 14:30:00'
-        },
-        {
-          id: 2,
-          username: 'producer1',
-          email: 'producer1@example.com',
-          role: 'producer',
-          status: 'active',
-          enterprise: '绿色农场',
-          createdAt: '2024-01-05 09:15:00',
-          lastLogin: '2024-01-15 12:20:00'
-        },
-        {
-          id: 3,
-          username: 'consumer1',
-          email: 'consumer1@example.com',
-          role: 'consumer',
-          status: 'active',
-          enterprise: null,
-          createdAt: '2024-01-10 16:45:00',
-          lastLogin: '2024-01-15 10:15:00'
-        }
-      ];
-      setUsers(mockUsers);
+      const list = await producerAPI.getProducers();
+      // 统一字段映射到表格使用
+      const mapped = (list || []).map(p => ({
+        id: p.id,
+        account: p.account,
+        name: p.name,
+        phone: p.phone,
+        createdAt: p.created_at,
+      }));
+      setUsers(mapped);
     } catch (error) {
-      message.error('加载用户数据失败');
+      message.error('加载农户列表失败');
     } finally {
       setLoading(false);
     }
@@ -147,168 +124,35 @@ const Users = () => {
   };
 
   const columns = [
-    {
-      title: '用户名',
-      dataIndex: 'username',
-      key: 'username',
-      render: (text) => <strong>{text}</strong>,
-    },
-    {
-      title: '邮箱',
-      dataIndex: 'email',
-      key: 'email',
-    },
-    {
-      title: '角色',
-      dataIndex: 'role',
-      key: 'role',
-      render: (role) => (
-        <Tag color={getRoleColor(role)}>
-          {role === 'admin' ? '管理员' : role === 'producer' ? '生产者' : '消费者'}
-        </Tag>
-      ),
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={getStatusColor(status)}>
-          {status === 'active' ? '活跃' : '禁用'}
-        </Tag>
-      ),
-    },
-    {
-      title: '所属企业',
-      dataIndex: 'enterprise',
-      key: 'enterprise',
-      render: (enterprise) => enterprise || '-',
-    },
-    {
-      title: '创建时间',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 150,
-    },
-    {
-      title: '最后登录',
-      dataIndex: 'lastLogin',
-      key: 'lastLogin',
-      width: 150,
-      render: (lastLogin) => lastLogin || '-',
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 150,
-      render: (_, record) => (
-        <Space size="small">
-          <Tooltip title="查看详情">
-            <Button
-              type="text"
-              icon={<EyeOutlined />}
-              size="small"
-            />
-          </Tooltip>
-          <Tooltip title="编辑">
-            <Button
-              type="text"
-              icon={<EditOutlined />}
-              size="small"
-              onClick={() => handleEdit(record)}
-            />
-          </Tooltip>
-          <Popconfirm
-            title="确定要删除这个用户吗？"
-            onConfirm={() => handleDelete(record.id)}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Tooltip title="删除">
-              <Button
-                type="text"
-                danger
-                icon={<DeleteOutlined />}
-                size="small"
-              />
-            </Tooltip>
-          </Popconfirm>
-        </Space>
-      ),
-    },
+    { title: '账号', dataIndex: 'account', key: 'account', render: (t) => <strong>{t}</strong> },
+    { title: '姓名', dataIndex: 'name', key: 'name' },
+    { title: '联系方式', dataIndex: 'phone', key: 'phone' },
+    { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', width: 180 },
   ];
 
-  const filteredUsers = users.filter(user =>
-    user.username.toLowerCase().includes(searchText.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchText.toLowerCase())
+  const filteredUsers = users.filter(u =>
+    (u.account || '').toLowerCase().includes(searchText.toLowerCase()) ||
+    (u.name || '').toLowerCase().includes(searchText.toLowerCase()) ||
+    (u.phone || '').toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const stats = {
-    total: users.length,
-    admin: users.filter(u => u.role === 'admin').length,
-    producer: users.filter(u => u.role === 'producer').length,
-    consumer: users.filter(u => u.role === 'consumer').length,
-    active: users.filter(u => u.status === 'active').length,
-  };
+  const stats = { total: users.length };
 
   return (
     <div className="users-page">
       <div className="page-header">
-        <h1>用户管理</h1>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleAdd}
-        >
-          添加用户
-        </Button>
+        <h1>农户管理</h1>
       </div>
 
       {/* 统计卡片 */}
       <Row gutter={[16, 16]} className="stats-row">
-        <Col xs={24} sm={12} lg={4}>
+        <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="总用户数"
+              title="农户总数"
               value={stats.total}
               prefix={<UserOutlined />}
               valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={4}>
-          <Card>
-            <Statistic
-              title="管理员"
-              value={stats.admin}
-              valueStyle={{ color: '#ff4d4f' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={4}>
-          <Card>
-            <Statistic
-              title="生产者"
-              value={stats.producer}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={4}>
-          <Card>
-            <Statistic
-              title="消费者"
-              value={stats.consumer}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={4}>
-          <Card>
-            <Statistic
-              title="活跃用户"
-              value={stats.active}
-              valueStyle={{ color: '#52c41a' }}
             />
           </Card>
         </Col>
@@ -318,7 +162,7 @@ const Users = () => {
       <Card className="table-card">
         <div className="table-header">
           <Input
-            placeholder="搜索用户名或邮箱"
+            placeholder="搜索账号/姓名/联系方式"
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -340,85 +184,7 @@ const Users = () => {
         />
       </Card>
 
-      {/* 添加/编辑用户模态框 */}
-      <Modal
-        title={editingUser ? '编辑用户' : '添加用户'}
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
-        footer={null}
-        width={600}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-        >
-          <Form.Item
-            name="username"
-            label="用户名"
-            rules={[
-              { required: true, message: '请输入用户名' },
-              { min: 3, message: '用户名至少3个字符' }
-            ]}
-          >
-            <Input placeholder="请输入用户名" />
-          </Form.Item>
-
-          <Form.Item
-            name="email"
-            label="邮箱"
-            rules={[
-              { required: true, message: '请输入邮箱' },
-              { type: 'email', message: '请输入有效的邮箱地址' }
-            ]}
-          >
-            <Input placeholder="请输入邮箱" />
-          </Form.Item>
-
-          <Form.Item
-            name="role"
-            label="角色"
-            rules={[{ required: true, message: '请选择角色' }]}
-          >
-            <Select placeholder="请选择角色">
-              <Option value="admin">管理员</Option>
-              <Option value="producer">生产者</Option>
-              <Option value="consumer">消费者</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="enterprise"
-            label="所属企业"
-          >
-            <Input placeholder="请输入所属企业（可选）" />
-          </Form.Item>
-
-          {!editingUser && (
-            <Form.Item
-              name="password"
-              label="密码"
-              rules={[
-                { required: true, message: '请输入密码' },
-                { min: 6, message: '密码至少6个字符' }
-              ]}
-            >
-              <Input.Password placeholder="请输入密码" />
-            </Form.Item>
-          )}
-
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">
-                {editingUser ? '更新' : '添加'}
-              </Button>
-              <Button onClick={() => setModalVisible(false)}>
-                取消
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
+      {/* 本页暂不提供新增/编辑；仅展示列表 */}
     </div>
   );
 };

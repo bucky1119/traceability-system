@@ -1,0 +1,17 @@
+<view class="container">
+  <view class="header">
+    <text class="title">设置注册码</text>
+    <text class="subtitle">更新生产者注册所需的注册码</text>
+  </view>
+
+  <view class="form">
+    <view class="form-item">
+      <text class="label">注册码</text>
+      <input class="input" placeholder="请输入注册码，如 PRODUCER_REG_2025" value="{{code}}" bindinput="onInput" />
+    </view>
+  </view>
+
+  <view class="actions">
+    <button class="btn-primary" bindtap="saveCode" loading="{{saving}}">保存</button>
+  </view>
+</view>

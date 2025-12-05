@@ -9,12 +9,12 @@ const config = {
     },
     // 测试环境
     test: {
-      baseUrl: 'https://test-api.example.com/api',
+      baseUrl: 'http://39.97.46.10:3000/api',
       timeout: 10000
     },
     // 生产环境
     production: {
-      baseUrl: 'https://api.example.com/api',
+      baseUrl: 'https://api.nongmaitong.cn/api',
       timeout: 10000
     }
   },

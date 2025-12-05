@@ -1,1 +1,82 @@
+<!-- farmerInput.wxml -->
+<view class="container">
+	<view class="header">
+		<text class="title">农户产品录入</text>
+		<text class="subtitle">管理员代农户录入产品批次</text>
+	</view>
+
+	<view class="section">
+		<view class="section-title">选择农户</view>
+		<view class="form-item">
+			<text class="label">农户账号</text>
+			<picker mode="selector" range="{{farmers}}" range-key="account" value="{{farmerIndex}}" bindchange="onFarmerChange">
+				<view class="picker-item">
+					<text class="picker-label">{{selectedFarmer ? (selectedFarmer.account + (selectedFarmer.name ? (' - ' + selectedFarmer.name) : '')) : '请选择农户'}}</text>
+					<text class="picker-arrow">▼</text>
+				</view>
+			</picker>
+		</view>
+
+		<view class="farmer-info" wx:if="{{selectedFarmer}}">
+			<text class="info-item">账号: {{selectedFarmer.account}}</text>
+			<text class="info-item" wx:if="{{selectedFarmer.name}}">姓名: {{selectedFarmer.name}}</text>
+			<text class="info-item" wx:if="{{selectedFarmer.phone}}">联系方式: {{selectedFarmer.phone}}</text>
+		</view>
+	</view>
+
+	<view class="section">
+		<view class="section-title">批次信息</view>
+
+		<view class="form-item">
+			<text class="label">蔬菜名称 *</text>
+			<input class="input" placeholder="如：有机黄瓜" value="{{form.vegetableName}}" data-field="vegetableName" bindinput="onInput" />
+		</view>
+
+		<view class="form-item">
+			<text class="label">品种</text>
+			<input class="input" placeholder="如：耐寒1号" value="{{form.vegetableVariety}}" data-field="vegetableVariety" bindinput="onInput" />
+		</view>
+
+		<view class="form-item">
+			<text class="label">产地 *</text>
+			<input class="input" placeholder="如：北京市顺义区" value="{{form.origin}}" data-field="origin" bindinput="onInput" />
+		</view>
+
+		<view class="form-item">
+			<text class="label">种植日期 *</text>
+			<picker mode="date" value="{{form.plantingTime}}" data-field="plantingTime" bindchange="onDateChange">
+				<view class="picker-item">
+					<text class="picker-label">{{form.plantingTime || '请选择日期'}}</text>
+					<text class="picker-arrow">▼</text>
+				</view>
+			</picker>
+		</view>
+
+		<view class="form-item">
+			<text class="label">收获日期 *</text>
+			<picker mode="date" value="{{form.harvestTime}}" data-field="harvestTime" bindchange="onDateChange">
+				<view class="picker-item">
+					<text class="picker-label">{{form.harvestTime || '请选择日期'}}</text>
+					<text class="picker-arrow">▼</text>
+				</view>
+			</picker>
+		</view>
+
+		<view class="form-item">
+			<text class="label">备注描述</text>
+			<input class="input" placeholder="选填" value="{{form.description}}" data-field="description" bindinput="onInput" />
+		</view>
+
+		<view class="form-item">
+			<text class="label">产品图片链接</text>
+			<input class="input" placeholder="选填，http(s)" value="{{form.imageUrl}}" data-field="imageUrl" bindinput="onInput" />
+		</view>
+	</view>
+
+	<view class="actions">
+		<button class="btn-secondary" bindtap="resetForm">重置</button>
+		<button class="btn-primary" bindtap="submit" loading="{{loading}}">提交</button>
+	</view>
+</view>
+
  

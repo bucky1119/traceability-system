@@ -65,17 +65,28 @@
 
 .scan-btn {
   background-color: #52c41a;
-  color: white;
+  color: #fff;
   border-radius: 40rpx;
   padding: 20rpx 40rpx;
   display: flex;
   align-items: center;
+  justify-content: center; /* 居中内容 */
   font-size: 28rpx;
+  font-weight: 600; /* 文案更醒目 */
+  min-width: 300rpx; /* 适度增加按钮宽度以凸显 */
+  box-shadow: 0 6rpx 16rpx rgba(82, 196, 26, 0.25); /* 轻微投影提升层次 */
 }
 
 .scan-icon {
   margin-right: 10rpx;
   font-size: 32rpx;
+}
+
+/* 扫码按钮文字：居中、加粗、微调字距 */
+.scan-text {
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 2rpx;
 }
 
 /* 筛选栏 */

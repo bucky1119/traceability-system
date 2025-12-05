@@ -11,6 +11,7 @@ import Enterprises from './pages/Enterprises/Enterprises';
 import Products from './pages/Products/Products';
 import AdminProductManagement from './pages/Products/AdminProductManagement';
 import Qrcodes from './pages/Qrcodes/Qrcodes';
+import Admins from './pages/Admins/Admins';
 import './App.css';
 
 function App() {
@@ -96,6 +97,16 @@ function App() {
                 <ProtectedRoute>
                   <MainLayout>
                     <Qrcodes />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admins"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Admins />
                   </MainLayout>
                 </ProtectedRoute>
               }

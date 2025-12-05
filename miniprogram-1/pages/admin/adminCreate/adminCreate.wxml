@@ -1,0 +1,31 @@
+<!-- adminCreate.wxml -->
+<view class="container">
+  <view class="header">
+    <text class="title">创建管理员</text>
+    <text class="subtitle">仅管理员可见并使用</text>
+  </view>
+
+  <view class="section">
+    <view class="form-item">
+      <text class="label">用户名 *</text>
+      <input class="input" placeholder="请输入用户名" value="{{form.username}}" data-field="username" bindinput="onInput" />
+    </view>
+    <view class="form-item">
+      <text class="label">密码 *</text>
+      <input class="input" password placeholder="请输入至少6位密码" value="{{form.password}}" data-field="password" bindinput="onInput" />
+    </view>
+    <view class="form-item">
+      <text class="label">角色</text>
+      <picker mode="selector" range="{{roles}}" range-key="label" value="{{roleIndex}}" bindchange="onRoleChange">
+        <view class="picker-item">
+          <text class="picker-label">{{roles[roleIndex].label}}</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+  </view>
+
+  <view class="actions">
+    <button class="btn-primary" bindtap="submit" loading="{{loading}}">创建</button>
+  </view>
+</view>

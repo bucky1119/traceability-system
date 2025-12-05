@@ -12,7 +12,7 @@ export default new DataSource({
   port: configService.get('DB_PORT', 3306),
   username: configService.get('DB_USERNAME', 'root'),
   password: configService.get('DB_PASSWORD', '123456'),
-  database: configService.get('DB_DATABASE', 'traceability_system'),
+  database: configService.get('DB_DATABASE', 'traceability_system_2'),
   entities: ['src/**/*.entity{.ts,.js}'],
   migrations: ['src/migrations/*{.ts,.js}'],
   synchronize: false,

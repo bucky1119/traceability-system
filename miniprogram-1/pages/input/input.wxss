@@ -200,3 +200,15 @@
 }
 
 
+/* 提示信息样式 */
+.tip {
+  background: #fff7e6;
+  color: #ad6800;
+  border: 1rpx solid #ffe58f;
+  padding: 16rpx 20rpx;
+  border-radius: 8rpx;
+  margin-bottom: 20rpx;
+  font-size: 26rpx;
+}
+
+

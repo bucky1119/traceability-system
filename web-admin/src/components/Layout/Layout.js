@@ -38,9 +38,14 @@ const MainLayout = ({ children }) => {
       label: '仪表盘',
     },
     {
+      key: '/admins',
+      icon: <UserOutlined />,
+      label: '管理员管理',
+    },
+    {
       key: '/users',
       icon: <UserOutlined />,
-      label: '用户管理',
+      label: '农户管理',
     },
     {
       key: '/enterprises',

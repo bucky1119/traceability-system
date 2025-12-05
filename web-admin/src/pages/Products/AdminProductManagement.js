@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { message } from 'antd';
+import api, { productBatchAPI, producerAPI } from '../../services/api';
 import './AdminProductManagement.css';
 
 const AdminProductManagement = () => {
@@ -8,20 +9,14 @@ const AdminProductManagement = () => {
   const [loading, setLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    batchCode: '',
     producerId: '',
+    vegetableName: '',
+    vegetableVariety: '',
     origin: '',
-    plantingDate: '',
-    harvestDate: '',
-    testType: '',
-    testDate: '',
-    testReport: '',
-    safetyRiskTest: '',
-    ingredientTest: '',
-    isQualified: false,
+    plantingTime: '',
+    harvestTime: '',
+    description: '',
     imageUrl: '',
-    batchNotes: ''
   });
 
   useEffect(() => {
@@ -32,14 +27,11 @@ const AdminProductManagement = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/api/products', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setProducts(response.data);
+      const list = await productBatchAPI.getBatches();
+      setProducts(list || []);
     } catch (error) {
-      console.error('获取产品列表失败:', error);
-      alert('获取产品列表失败');
+      console.error('获取产品批次失败:', error);
+      message.error('获取产品批次失败');
     } finally {
       setLoading(false);
     }
@@ -47,11 +39,8 @@ const AdminProductManagement = () => {
 
   const fetchFarmers = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/api/users?role=farmer', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setFarmers(response.data);
+      const list = await producerAPI.getProducers();
+      setFarmers(list || []);
     } catch (error) {
       console.error('获取农户列表失败:', error);
     }
@@ -69,33 +58,39 @@ const AdminProductManagement = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:3000/api/products/admin', formData, {
-        headers: { Authorization: `Bearer ${token}` }
+      // 简单校验
+      if (!formData.producerId) return message.warning('请选择农户');
+      if (!formData.vegetableName) return message.warning('请输入蔬菜名称');
+      if (!formData.origin) return message.warning('请输入产地');
+      if (!formData.plantingTime || !formData.harvestTime) return message.warning('请选择种植/收获日期');
+
+      await productBatchAPI.createBatch({
+        producerId: Number(formData.producerId),
+        vegetableName: formData.vegetableName,
+        vegetableVariety: formData.vegetableVariety || undefined,
+        origin: formData.origin,
+        plantingTime: formData.plantingTime,
+        harvestTime: formData.harvestTime,
+        description: formData.description || undefined,
+        imageUrl: formData.imageUrl || undefined,
       });
-      
-      alert('产品录入成功！');
+
+      message.success('产品录入成功！');
       setShowAddModal(false);
       setFormData({
-        name: '',
-        batchCode: '',
         producerId: '',
+        vegetableName: '',
+        vegetableVariety: '',
         origin: '',
-        plantingDate: '',
-        harvestDate: '',
-        testType: '',
-        testDate: '',
-        testReport: '',
-        safetyRiskTest: '',
-        ingredientTest: '',
-        isQualified: false,
+        plantingTime: '',
+        harvestTime: '',
+        description: '',
         imageUrl: '',
-        batchNotes: ''
       });
       fetchProducts();
     } catch (error) {
       console.error('录入产品失败:', error);
-      alert('录入产品失败: ' + (error.response?.data?.message || error.message));
+      message.error('录入产品失败: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -103,28 +98,19 @@ const AdminProductManagement = () => {
 
   const handleExport = async (farmerId = null) => {
     try {
-      const token = localStorage.getItem('token');
-      const url = farmerId 
-        ? `http://localhost:3000/api/products/export?farmerId=${farmerId}`
-        : 'http://localhost:3000/api/products/export';
-      
-      const response = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob'
-      });
-
-      const blob = new Blob([response.data], { type: 'text/csv' });
+      const resp = await productBatchAPI.exportCsv(farmerId ? Number(farmerId) : undefined);
+      const blob = new Blob([resp], { type: 'text/csv;charset=utf-8' });
       const url2 = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url2;
-      a.download = farmerId ? `farmer_${farmerId}_test_results.csv` : 'all_farmers_test_results.csv';
+      a.download = farmerId ? `producer_${farmerId}_products.csv` : 'all_products.csv';
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url2);
       document.body.removeChild(a);
     } catch (error) {
       console.error('导出失败:', error);
-      alert('导出失败');
+      message.error('导出失败');
     }
   };
 
@@ -143,7 +129,7 @@ const AdminProductManagement = () => {
             className="btn btn-secondary" 
             onClick={() => handleExport()}
           >
-            导出全部检测结果
+            下载Excel（全部产品）
           </button>
         </div>
       </div>
@@ -173,29 +159,21 @@ const AdminProductManagement = () => {
               {products.map(product => (
                 <div key={product.id} className="product-card">
                   <div className="product-header">
-                    <h3>{product.name}</h3>
-                    <span className={`status ${product.isQualified ? 'qualified' : 'unqualified'}`}>
-                      {product.isQualified ? '合格' : '不合格'}
-                    </span>
+                    <h3>{product.vegetableName}</h3>
                   </div>
                   <div className="product-info">
-                    <p><strong>生产者:</strong> {product.producerName}</p>
-                    <p><strong>批次:</strong> {product.batch?.batchCode}</p>
+                    <p><strong>农户账号:</strong> {product?.producer?.account || product.producerId}</p>
+                    <p><strong>农户姓名:</strong> {product?.producer?.name || '-'}</p>
                     <p><strong>产地:</strong> {product.origin}</p>
-                    <p><strong>检测类型:</strong> {product.testType}</p>
-                    {product.safetyRiskTest && (
-                      <p><strong>安全风险因子:</strong> {product.safetyRiskTest}</p>
-                    )}
-                    {product.ingredientTest && (
-                      <p><strong>产品成分:</strong> {product.ingredientTest}</p>
-                    )}
+                    <p><strong>种植时间:</strong> {product.plantingTime}</p>
+                    <p><strong>收获时间:</strong> {product.harvestTime}</p>
                   </div>
                   <div className="product-actions">
                     <button 
                       className="btn btn-small"
                       onClick={() => handleExport(product.producerId)}
                     >
-                      导出该农户
+                      下载该农户Excel
                     </button>
                   </div>
                 </div>
@@ -210,30 +188,29 @@ const AdminProductManagement = () => {
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>录入产品</h2>
+              <h2>录入产品（批次）</h2>
               <button className="close-btn" onClick={() => setShowAddModal(false)}>×</button>
             </div>
             
             <form onSubmit={handleSubmit} className="product-form">
               <div className="form-group">
-                <label>产品名称 *</label>
+                <label>蔬菜名称 *</label>
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name}
+                  name="vegetableName"
+                  value={formData.vegetableName}
                   onChange={handleInputChange}
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label>批次编号 *</label>
+                <label>品种</label>
                 <input
                   type="text"
-                  name="batchCode"
-                  value={formData.batchCode}
+                  name="vegetableVariety"
+                  value={formData.vegetableVariety}
                   onChange={handleInputChange}
-                  required
                 />
               </div>
 
@@ -248,7 +225,7 @@ const AdminProductManagement = () => {
                   <option value="">请选择农户</option>
                   {farmers.map(farmer => (
                     <option key={farmer.id} value={farmer.id}>
-                      {farmer.username} - {farmer.tel}
+                      {farmer.account} - {farmer.name || '-'} ({farmer.phone || '-'})
                     </option>
                   ))}
                 </select>
@@ -266,94 +243,28 @@ const AdminProductManagement = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>种植日期</label>
+                  <label>种植日期 *</label>
                   <input
                     type="date"
-                    name="plantingDate"
-                    value={formData.plantingDate}
+                    name="plantingTime"
+                    value={formData.plantingTime}
                     onChange={handleInputChange}
                   />
                 </div>
 
                 <div className="form-group">
-                  <label>收获日期</label>
+                  <label>收获日期 *</label>
                   <input
                     type="date"
-                    name="harvestDate"
-                    value={formData.harvestDate}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>检测类型</label>
-                  <input
-                    type="text"
-                    name="testType"
-                    value={formData.testType}
-                    onChange={handleInputChange}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>检测日期</label>
-                  <input
-                    type="date"
-                    name="testDate"
-                    value={formData.testDate}
+                    name="harvestTime"
+                    value={formData.harvestTime}
                     onChange={handleInputChange}
                   />
                 </div>
               </div>
 
               <div className="form-group">
-                <label>检测报告链接</label>
-                <input
-                  type="url"
-                  name="testReport"
-                  value={formData.testReport}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>安全风险因子检测</label>
-                <textarea
-                  name="safetyRiskTest"
-                  value={formData.safetyRiskTest}
-                  onChange={handleInputChange}
-                  placeholder="如：重金属含量：铅<0.1mg/kg，镉<0.05mg/kg"
-                  rows="3"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>产品成分检测</label>
-                <textarea
-                  name="ingredientTest"
-                  value={formData.ingredientTest}
-                  onChange={handleInputChange}
-                  placeholder="如：蛋白质：2.1g/100g，维生素C：15mg/100g"
-                  rows="3"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    name="isQualified"
-                    checked={formData.isQualified}
-                    onChange={handleInputChange}
-                  />
-                  是否合格
-                </label>
-              </div>
-
-              <div className="form-group">
-                <label>产品图片链接</label>
+                <label>产品图片链接（可选）</label>
                 <input
                   type="url"
                   name="imageUrl"
@@ -363,10 +274,10 @@ const AdminProductManagement = () => {
               </div>
 
               <div className="form-group">
-                <label>批次备注</label>
+                <label>备注描述</label>
                 <textarea
-                  name="batchNotes"
-                  value={formData.batchNotes}
+                  name="description"
+                  value={formData.description}
                   onChange={handleInputChange}
                   rows="3"
                 />

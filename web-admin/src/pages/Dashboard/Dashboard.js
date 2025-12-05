@@ -10,6 +10,7 @@ import {
   ExclamationCircleOutlined
 } from '@ant-design/icons';
 import { Line, Pie } from '@ant-design/plots';
+import { statsAPI } from '../../services/api';
 import { useSelector } from 'react-redux';
 import './Dashboard.css';
 
@@ -29,56 +30,20 @@ const Dashboard = () => {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      // 这里应该调用实际的API
-      // 暂时使用模拟数据
-      const mockStats = {
-        totalUsers: 156,
-        totalEnterprises: 23,
-        totalProducts: 89,
-        totalQrcodes: 1247,
-        totalScans: 5678,
-        qualifiedProducts: 76,
-        unqualifiedProducts: 13
-      };
-
-      const mockRecentScans = [
-        {
-          id: 1,
-          productName: '有机黄瓜',
-          qrcodeId: 'abc123',
-          scanTime: '2024-01-15 14:30:25',
-          location: '北京市朝阳区'
-        },
-        {
-          id: 2,
-          productName: '绿色生菜',
-          qrcodeId: 'def456',
-          scanTime: '2024-01-15 13:45:12',
-          location: '上海市浦东新区'
-        },
-        {
-          id: 3,
-          productName: '新鲜番茄',
-          qrcodeId: 'ghi789',
-          scanTime: '2024-01-15 12:20:08',
-          location: '广州市天河区'
-        }
-      ];
-
-      const mockScanTrend = [
-        { date: '2024-01-10', scans: 120 },
-        { date: '2024-01-11', scans: 145 },
-        { date: '2024-01-12', scans: 98 },
-        { date: '2024-01-13', scans: 167 },
-        { date: '2024-01-14', scans: 189 },
-        { date: '2024-01-15', scans: 156 }
-      ];
-
-      setStats(mockStats);
-      setRecentScans(mockRecentScans);
-      setScanTrend(mockScanTrend);
+      const data = await statsAPI.getDashboardStats();
+      setStats({
+        totalUsers: data.totalProducers, // 以农户数量代替用户总数
+        totalProducts: data.totalProducts,
+        totalQrcodes: data.totalQrcodes,
+        totalScans: data.totalScans,
+        qualifiedProducts: data.qualifiedProducts,
+        unqualifiedProducts: data.unqualifiedProducts,
+      });
+      // 暂无扫码趋势与最近扫描真实数据，使用空占位
+      setRecentScans([]);
+      setScanTrend([]);
     } catch (error) {
-      message.error('加载数据失败');
+      message.error('加载仪表盘数据失败');
       console.error('Dashboard data error:', error);
     } finally {
       setLoading(false);
@@ -170,20 +135,10 @@ const Dashboard = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="总用户数"
+              title="农户总数"
               value={stats.totalUsers}
               prefix={<UserOutlined />}
               valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="企业数量"
-              value={stats.totalEnterprises}
-              prefix={<ShopOutlined />}
-              valueStyle={{ color: '#52c41a' }}
             />
           </Card>
         </Col>
