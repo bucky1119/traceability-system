@@ -34,12 +34,13 @@
   flex: 1;
 }
 
+.user-line-top { display:flex; align-items:center; gap:16rpx; flex-wrap:wrap; margin-bottom:8rpx; }
+
 .user-name {
   font-size: 32rpx;
   font-weight: bold;
   color: #333;
-  display: block;
-  margin-bottom: 8rpx;
+  display: inline-block;
 }
 
 .user-role {
@@ -49,7 +50,6 @@
   padding: 4rpx 12rpx;
   border-radius: 4rpx;
   display: inline-block;
-  margin-bottom: 8rpx;
 }
 
 .user-enterprise {
@@ -57,6 +57,12 @@
   color: #666;
   display: block;
 }
+
+.user-phone-row { display:flex; align-items:center; gap:12rpx; font-size:26rpx; margin-bottom:6rpx; }
+.phone-label { background:#eef2ff; color:#5563c1; padding:2rpx 10rpx; border-radius:6rpx; font-size:22rpx; }
+.phone-value { color:#333; font-weight:500; letter-spacing:1rpx; }
+.phone-copy { color:#667eea; font-size:24rpx; padding:4rpx 12rpx; background:#f0f2ff; border-radius:6rpx; }
+.phone-copy:active { background:#e3e8ff; }
 
 /* 统计数据 */
 .stats-section {
@@ -294,6 +300,11 @@
 .modal-close { font-size: 40rpx; color: #999; padding: 0 8rpx; }
 .modal-body { padding: 24rpx 28rpx; display: flex; flex-direction: column; gap: 16rpx; }
 .modal-actions { display: flex; gap: 16rpx; padding: 20rpx 28rpx; border-top: 1rpx solid #f0f0f0; }
+
+.input--readonly {
+  color: #666;
+  background-color: #f7f7f7;
+}
 
 /* 响应式设计 */
 @media (max-width: 750rpx) {

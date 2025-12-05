@@ -11,7 +11,7 @@ const dataSource = new DataSource({
   database: process.env.DB_DATABASE || 'traceability_system_2',
   entities: ['src/**/*.entity.ts'],
   synchronize: true, // 自动同步数据库结构
-  logging: true,
+  logging: false,
   charset: 'utf8mb4',
 });
 

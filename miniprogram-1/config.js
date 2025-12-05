@@ -20,7 +20,7 @@ const config = {
   },
 
   // 当前环境
-  env: 'development', // development, test, production
+  env: 'production', // development, test, production
 
   // 是否使用模拟数据（开发环境可用）
   // useMockData: true,

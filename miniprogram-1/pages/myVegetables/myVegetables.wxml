@@ -80,13 +80,27 @@
       </view>
       
       <view class="product-info">
-        <text class="product-name">{{item.name}}</text>
-  <text class="product-batch">品种: {{item.variety || '—'}}</text>
-        <text class="product-producer" wx:if="{{userRole === 'admin' && item.producerName}}">农户: {{item.producerName}}</text>
-        <text class="product-origin" wx:if="{{item.origin}}">产地: {{item.origin}}</text>
-        <text class="product-date">
-          录入时间: {{item.created_at}}
-        </text>
+        <view class="info-header">
+          <text class="product-name">{{item.name || '未命名产品'}}</text>
+          <text class="batch-chip" wx:if="{{item.variety}}">品种 · {{item.variety}}</text>
+        </view>
+
+        <view class="info-divider"></view>
+
+        <view class="info-grid">
+          <view class="info-row" wx:if="{{userRole === 'admin' && item.producerName}}">
+            <text class="info-label">农户</text>
+            <text class="info-value">{{item.producerName}}</text>
+          </view>
+          <view class="info-row" wx:if="{{item.origin}}">
+            <text class="info-label">产地</text>
+            <text class="info-value">{{item.origin}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">录入时间</text>
+            <text class="info-value">{{item.created_at || '--'}}</text>
+          </view>
+        </view>
       </view>
       
       <view class="product-actions">
@@ -158,9 +172,6 @@
       </view>
       
       <view class="modal-actions">
-        <button class="btn-secondary" bindtap="downloadQrcode">
-          下载二维码
-        </button>
         <button class="btn-success" bindtap="saveToAlbum">
           保存到相册
         </button>

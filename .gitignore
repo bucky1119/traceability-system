@@ -68,6 +68,6 @@ miniprogram-1/node_modules/
 *.db
 *.sqlite
 *.sqlite3
-
 # 其他
-.traceability-backend_v1.tar.gz
+设施蔬菜溯源系统需求.docx
+SERVER_DEPLOYMENT.md

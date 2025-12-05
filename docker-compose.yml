@@ -23,7 +23,9 @@ services:
       retries: 10
 
   backend:
-    image: bucky1119/traceability-backend_v1
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: traceability-backend
     restart: unless-stopped
     depends_on:
@@ -40,7 +42,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./backend/uploads:/app/uploads
+      - ./backend/uploads:/usr/src/app/uploads
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/docs"]
       interval: 30s

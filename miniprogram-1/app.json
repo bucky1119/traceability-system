@@ -15,7 +15,7 @@
   "window": {
     "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#ffffff",
-    "navigationBarTitleText": "蔬菜溯源系统",
+    "navigationBarTitleText": "农脉通",
     "navigationBarTextStyle": "black"
   },
   "tabBar": {

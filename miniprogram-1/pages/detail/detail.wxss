@@ -15,6 +15,140 @@
 .product-cover { margin-bottom: 16rpx; }
 .cover-image { width: 100%; height: 360rpx; border-radius: 10rpx; }
 
+.product-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.product-card .card-header {
+  padding: 28rpx 30rpx;
+  margin-bottom: 0;
+  border-bottom: 1rpx solid #eef1fa;
+}
+
+.product-overview {
+  padding: 30rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 26rpx;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+}
+
+.product-card .form {
+  padding: 30rpx;
+}
+
+.overview-main {
+  display: flex;
+  gap: 28rpx;
+}
+
+.overview-cover {
+  position: relative;
+  width: 240rpx;
+  height: 240rpx;
+  border-radius: 20rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f0f2f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overview-cover.placeholder {
+  color: #a0a5b1;
+  font-size: 26rpx;
+  font-weight: 500;
+}
+
+.overview-image {
+  width: 100%;
+  height: 100%;
+}
+
+.overview-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.overview-name {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #1f1f1f;
+  letter-spacing: 3rpx;
+}
+
+.overview-chip {
+  align-self: flex-start;
+  padding: 10rpx 24rpx;
+  border-radius: 24rpx;
+  background: rgba(102, 126, 234, 0.12);
+  color: #5263d3;
+  font-size: 26rpx;
+  font-weight: 500;
+}
+
+.overview-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 6rpx;
+}
+
+.tag-pill {
+  padding: 10rpx 20rpx;
+  border-radius: 18rpx;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 24rpx;
+}
+
+.info-divider {
+  height: 2rpx;
+  border-radius: 2rpx;
+  background: #e3e7f0;
+}
+
+.detail-info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.detail-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24rpx;
+}
+
+.detail-info-label {
+  font-size: 24rpx;
+  color: #8c8c8c;
+  letter-spacing: 1rpx;
+}
+
+.detail-info-value {
+  flex: 1;
+  font-size: 26rpx;
+  color: #333;
+  text-align: right;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.detail-info-value.multiline {
+  line-height: 1.7;
+  text-align: left;
+}
+
+.detail-info-row--desc {
+  align-items: stretch;
+}
+
 /* 表单 */
 .form { display: flex; flex-direction: column; gap: 16rpx; }
 .form-item { display: flex; flex-direction: column; gap: 8rpx; }
@@ -504,5 +638,29 @@
   .qrcode-image {
     width: 90vw;
     max-width: 600rpx;
+  }
+
+  .overview-main {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .overview-cover {
+    width: 100%;
+    max-width: 440rpx;
+    height: 320rpx;
+  }
+
+  .overview-info {
+    align-items: center;
+    text-align: center;
+  }
+
+  .overview-tags {
+    justify-content: center;
+  }
+
+  .detail-info-value {
+    text-align: right;
   }
 }

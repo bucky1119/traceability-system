@@ -6,9 +6,15 @@
       <image src="{{userInfo.avatar || '/images/default-product.jpg'}}" mode="aspectFill"/>
     </view>
     <view class="user-info">
-      <text class="user-name">{{userInfo.username}}</text>
+      <view class="user-line-top">
+        <text class="user-role">用户名</text>
+        <text class="user-name">{{userInfo.username}}</text>
+      </view>
+      <view class="user-phone-row" wx:if="{{userInfo.phone}}">
+        <text class="user-role">联系方式</text>
+        <text class="phone-value">{{userInfo.phone}}</text>
+      </view>
       <text class="user-role">{{userInfo.role === 'admin' ? '管理员' : '生产者'}}</text>
-      <text class="user-enterprise" wx:if="{{userInfo.enterprise}}">{{userInfo.enterprise}}</text>
     </view>
   </view>
 
@@ -22,10 +28,10 @@
       <text class="stat-number">{{stats.qrcodeCount}}</text>
       <text class="stat-label">二维码</text>
     </view>
-    <view class="stat-card">
+    <!-- <view class="stat-card">
       <text class="stat-number">{{stats.scanCount}}</text>
       <text class="stat-label">扫码次数</text>
-    </view>
+    </view> -->
   </view>
 
   <!-- 管理员功能模块 -->
@@ -88,11 +94,11 @@
         <text class="action-desc">录入新的产品信息</text>
       </view>
       
-      <view class="action-item" bindtap="goToQrcodeManagement">
+      <!-- <view class="action-item" bindtap="goToQrcodeManagement">
         <view class="action-icon">📱</view>
         <text class="action-text">二维码管理</text>
         <text class="action-desc">管理产品二维码</text>
-      </view>
+      </view> -->
       
       <view class="action-item" bindtap="goToProfile">
         <view class="action-icon">👤</view>
@@ -163,7 +169,7 @@
         <text class="label">账号</text>
         <input
           class="input"
-          placeholder="请输入登录账号，如 bucky"
+          placeholder="请输入登录账号"
           value="{{registerForm.account}}"
           bindinput="onRegisterInput"
           data-field="account"
@@ -239,6 +245,10 @@
         <text class="modal-close" bindtap="closeProfileModal">×</text>
       </view>
       <view class="modal-body">
+        <view class="form-item">
+          <text class="label">登录账号（不可修改）</text>
+          <input class="input input--readonly" value="{{profileForm.account}}" disabled="true"/>
+        </view>
         <view class="form-item">
           <text class="label">用户名</text>
           <input class="input" placeholder="请输入用户名" value="{{profileForm.name}}" bindinput="onProfileInput" data-field="name" />

@@ -50,7 +50,15 @@ Page({
     const userInfo = wx.getStorageSync('userInfo');
     if (userInfo) {
       this.setData({ userInfo });
-      this.loadUserStats();
+      // 避免每次点击用户中心都触发统计接口，请仅在本次会话首次进入时加载一次
+      if (!this._statsLoadedOnce) {
+        this._statsLoadedOnce = true;
+        this.loadUserStats();
+      }
+      // 首次进入或本地没有最新 phone 时刷新生产者资料
+      if (userInfo.role === 'producer') {
+        this.refreshUserProfile();
+      }
     } else {
       this.setData({ userInfo: null });
     }
@@ -211,6 +219,11 @@ Page({
       // 已在当前页，直接刷新统计与视图即可
       this.loadUserStats();
 
+      // 登录后拉取最新生产者资料（含 phone / name）
+      if (user.role === 'producer') {
+        this.refreshUserProfile(true);
+      }
+
     } catch (error) {
       console.error('登录失败:', error);
       this.setData({ loginLoading: false });
@@ -311,6 +324,7 @@ Page({
         this.setData({
           showProfileModal: true,
           profileForm: {
+            account: me?.account || userInfo.account || userInfo.username || '',
             name: me?.name || userInfo.username || '',
             phone: me?.phone || ''
           }
@@ -322,11 +336,52 @@ Page({
         this.setData({
           showProfileModal: true,
           profileForm: {
+            account: userInfo.account || userInfo.username || '',
             name: userInfo.username || '',
             phone: ''
           }
         });
       });
+  },
+
+  // 复制手机号
+  copyPhone(e) {
+    const phone = e.currentTarget.dataset.phone;
+    if (!phone) return;
+    wx.setClipboardData({
+      data: phone,
+      success: () => {
+        wx.showToast({ title: '已复制', icon: 'success' });
+      }
+    });
+  },
+
+  // 刷新生产者完整资料（仅生产者）
+  async refreshUserProfile(force = false) {
+    if (this._profileLoading) return;
+    const userInfo = wx.getStorageSync('userInfo');
+    if (!userInfo || userInfo.role !== 'producer') return;
+    if (this._profileLoadedOnce && !force && userInfo.phone) return; // 已有数据且非强制
+    this._profileLoading = true;
+    try {
+      const me = await producerAPI.getMe();
+      if (me) {
+        const merged = {
+          ...userInfo,
+          account: me.account || userInfo.account,
+          username: me.name || userInfo.username,
+          phone: me.phone || userInfo.phone
+        };
+        wx.setStorageSync('userInfo', merged);
+        this.setData({ userInfo: merged });
+      }
+    } catch (err) {
+      // 静默失败
+      console.warn('刷新生产者资料失败', err);
+    } finally {
+      this._profileLoading = false;
+      this._profileLoadedOnce = true;
+    }
   },
   
 
@@ -360,6 +415,10 @@ Page({
       // 同步本地 userInfo 展示名
       const userInfo = wx.getStorageSync('userInfo') || {};
       userInfo.username = name.trim();
+      // 同步手机号以便在用户卡片中显示
+      if (phone) {
+        userInfo.phone = phone;
+      }
       wx.setStorageSync('userInfo', userInfo);
       this.setData({ userInfo, showProfileModal: false });
     } catch (e) {

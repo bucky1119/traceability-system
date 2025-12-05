@@ -1,5 +1,13 @@
 <!--index.wxml-->
 <view class="container">
+  <view class="branding-card">
+    <text class="app-name">{{appName}}</text>
+    <text class="app-intro">{{appIntro}}</text>
+    <view class="intro-divider"></view>
+    <view class="intro-actions">
+      <button class="intro-btn" bindtap="handleScan">立即扫码追踪</button>
+    </view>
+  </view>
   <!-- 模拟数据测试状态 -->
   <!-- <view class="mock-status" wx:if="{{mockDataStatus}}">
     <text class="mock-text">{{mockDataStatus}}</text>
@@ -17,11 +25,11 @@
       <button class="search-btn" bindtap="handleSearch">搜索</button>
     </view>
     
-    <view class="scan-section">
+    <!-- <view class="scan-section">
       <button class="scan-btn" bindtap="handleScan">
         <text class="scan-text">扫码溯源</text>
       </button>
-    </view>
+    </view> -->
   </view>
 
   <!-- 筛选栏 -->

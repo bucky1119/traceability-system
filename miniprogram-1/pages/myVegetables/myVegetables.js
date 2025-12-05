@@ -49,13 +49,8 @@ Page({
       // 记录角色，管理员查看全量产品
       this.setData({ userRole: userInfo.role || 'producer' });
       console.log('用户已登录，开始加载数据');
-      // 避免进入时重复触发加载
-      if (this._initialLoaded) {
-        console.log('已完成首轮加载，跳过');
-      } else {
-        this._initialLoaded = true;
-        this.loadProducts();
-      }
+      // 每次进入页面都刷新一次产品列表，确保数据最新
+      this.loadProducts();
     } else {
       console.log('用户未登录，跳转到登录页面');
       wx.navigateTo({
@@ -69,8 +64,6 @@ Page({
     if (this.data.searchTimer) {
       clearTimeout(this.data.searchTimer);
     }
-    // 页面卸载时重置首轮加载标志
-    this._initialLoaded = false;
   },
 
   // 检查登录状态

@@ -1,30 +1,69 @@
 <view class="container">
-  <view class="header">
+  <!-- <view class="header">
     <text class="title">产品详情</text>
-  </view>
+  </view> -->
 
   <view wx:if="{{loading}}" class="loading">加载中...</view>
 
   <view wx:if="{{!loading && product}}" class="content">
     <!-- 产品信息 -->
-    <view class="card">
+    <view class="card product-card">
       <view class="card-header">
         <text class="card-title">基本信息</text>
         <button class="btn-outline-primary" wx:if="{{!editProductMode && !viewOnly}}" bindtap="enterEditProduct">编辑</button>
       </view>
 
-      <view wx:if="{{!editProductMode}}">
-        <view class="product-cover" wx:if="{{imageFullUrl}}" bindtap="previewProductImage">
-          <image src="{{imageFullUrl}}" mode="aspectFill" class="cover-image" />
+      <view wx:if="{{!editProductMode}}" class="product-overview">
+        <view class="overview-main">
+          <view class="overview-cover" wx:if="{{imageFullUrl}}" bindtap="previewProductImage">
+            <image src="{{imageFullUrl}}" mode="aspectFill" class="overview-image" />
+          </view>
+          <view class="overview-cover placeholder" wx:else>
+            <text class="overview-placeholder">暂无图片</text>
+          </view>
+
+          <view class="overview-info">
+            <text class="overview-name">{{product.vegetableName || '未命名产品'}}</text>
+            <text class="overview-chip" wx:if="{{product.vegetableVariety}}">品种 · {{product.vegetableVariety}}</text>
+            <view class="overview-tags">
+              <text class="tag-pill" wx:if="{{product.origin}}">产地 · {{product.origin}}</text>
+              <text class="tag-pill" wx:if="{{producerName}}">生产者 · {{producerName}}</text>
+            </view>
+          </view>
         </view>
-        <view class="row"><text class="label">名称</text><text class="value">{{product.vegetableName}}</text></view>
-        <view class="row"><text class="label">品种</text><text class="value">{{product.vegetableVariety || '—'}}</text></view>
-        <view class="row"><text class="label">产地</text><text class="value">{{product.origin || '—'}}</text></view>
-  <view class="row"><text class="label">生产者</text><text class="value">{{producerName || '—'}}</text></view>
-  <view class="row"><text class="label">联系方式</text><text class="value">{{producerPhone || '—'}}</text></view>
-  <view class="row"><text class="label">种植</text><text class="value">{{plantingDateDisplay || '—'}}</text></view>
-  <view class="row"><text class="label">收获</text><text class="value">{{harvestDateDisplay || '—'}}</text></view>
-        <view class="row"><text class="label">描述</text><text class="value">{{product.description || '—'}}</text></view>
+
+        <view class="info-divider"></view>
+
+        <view class="detail-info-grid">
+          <view class="detail-info-row">
+            <text class="detail-info-label">品种</text>
+            <text class="detail-info-value">{{product.vegetableVariety || '—'}}</text>
+          </view>
+          <view class="detail-info-row">
+            <text class="detail-info-label">产地</text>
+            <text class="detail-info-value">{{product.origin || '—'}}</text>
+          </view>
+          <view class="detail-info-row">
+            <text class="detail-info-label">生产者</text>
+            <text class="detail-info-value">{{producerName || '—'}}</text>
+          </view>
+          <view class="detail-info-row">
+            <text class="detail-info-label">联系方式</text>
+            <text class="detail-info-value">{{producerPhone || '—'}}</text>
+          </view>
+          <view class="detail-info-row">
+            <text class="detail-info-label">种植时间</text>
+            <text class="detail-info-value">{{plantingDateDisplay || '—'}}</text>
+          </view>
+          <view class="detail-info-row">
+            <text class="detail-info-label">收获时间</text>
+            <text class="detail-info-value">{{harvestDateDisplay || '—'}}</text>
+          </view>
+          <view class="detail-info-row detail-info-row--desc">
+            <text class="detail-info-label">描述</text>
+            <text class="detail-info-value multiline">{{product.description || '—'}}</text>
+          </view>
+        </view>
       </view>
 
       <view wx:if="{{editProductMode}}" class="form">

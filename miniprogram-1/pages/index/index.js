@@ -7,6 +7,8 @@ Page({
     products: [],
     filteredProducts: [], // 添加筛选后的产品列表
     searchKeyword: '',
+    appName: '农脉通',
+    appIntro: '从田间沃土到餐桌餐盘，“农脉通”陪你追踪每一份农产品的成长轨迹，扫码即可查看种植基地、施肥用药、采摘加工等全流程信息。',
     filterIndex: 0,
     filterOptions: [
       { label: '全部产品', value: 'all' },
